@@ -1,0 +1,33 @@
+This is a bundle of various unrelated and eventually useful bash (and perl)
+scripts. Most of them are some kind of "quick and dirty" approaches and
+are not sophisticated or mature at all. Some will work only for specific
+operating systems (as written for Arch Linux) and hardware "out of the box"
+and need to be adapted for the appropriate configuration.
+Most scripts are just wrappers around other software.
+
+
+The bundle currently contains the following 14 scripts:
+
+* ap.sh - start/stop a software access point with "hostapd" and "dhcpd"
+* blctl.sh - control backlight brightness
+* ddg.sh - open "firefox" and search with DuckDuckGo search engine from
+    command line
+* dns.sh - get IP address for specific host name and vice versa
+    using "host" tool
+* fdiff.sh - wrapper around "diff" system tool to get more specialized
+    output
+* hex.pl - convert plain ASCII string to ASCII hexadecimal representation
+    and vice versa
+* invoke.sh - start any program (including command line arguments) from
+    terminal as background task with definitely no output to STDOUT or
+    STDERR
+* ipstat.sh - print active network interface, local IP address, public
+    IP address, and TOR exit node IP if any
+* isgd.sh - command line URL shortener (https://is.gd)
+* tinyurl.sh - command line URL shortener (https://tinyurl.com)
+* unitconv.sh - unit conversion tool; wrapper around "units"
+* userlist.sh - print all users from passwd file
+* volctl.sh - volume (speaker/headphone) controller; wrapper around
+    "amixer"
+* wikipedia.sh - open specific Wikipedia article from command line
+    (support for German and English language but easily extendable)
