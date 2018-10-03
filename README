@@ -6,9 +6,11 @@ and need to be adapted for the appropriate configuration.
 Most scripts are just wrappers around other software.
 
 
-The bundle currently contains the following 16 scripts:
+The bundle currently contains the following 17 scripts:
 
 * ap.sh - start/stop a software access point with "hostapd" and "dhcpd"
+* aphwaddr.sh - print the hardware address (MAC address) of the wireless
+    access point currently connected to
 * blctl.sh - control backlight brightness
 * ddg.sh - open "firefox" and search with DuckDuckGo search engine from
     command line
