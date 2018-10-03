@@ -18,6 +18,8 @@ The bundle currently contains the following 14 scripts:
     output
 * hex.pl - convert plain ASCII string to ASCII hexadecimal representation
     and vice versa
+* inet.sh - a "netctl" wrapper to start the default or a specified network
+    profile
 * invoke.sh - start any program (including command line arguments) from
     terminal as background task with definitely no output to STDOUT or
     STDERR
