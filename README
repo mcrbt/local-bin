@@ -6,7 +6,7 @@ and need to be adapted for the appropriate configuration.
 Most scripts are just wrappers around other software.
 
 
-The bundle currently contains the following 14 scripts:
+The bundle currently contains the following 16 scripts:
 
 * ap.sh - start/stop a software access point with "hostapd" and "dhcpd"
 * blctl.sh - control backlight brightness
@@ -26,6 +26,8 @@ The bundle currently contains the following 14 scripts:
 * ipstat.sh - print active network interface, local IP address, public
     IP address, and TOR exit node IP if any
 * isgd.sh - command line URL shortener (https://is.gd)
+* refrestore.sh - reopen hyperlinks stored in separate ".href" files or
+    read file containing several links (one per line)
 * tinyurl.sh - command line URL shortener (https://tinyurl.com)
 * unitconv.sh - unit conversion tool; wrapper around "units"
 * userlist.sh - print all users from passwd file
