@@ -41,7 +41,7 @@ Of course you will need to make the tools executable first:
 
 
 DESCRIPTION:
-The collection currently contains the following 21 scripts:
+The collection currently contains the following 22 scripts:
 
 * ap.sh
     - start/stop a software access point with "hostapd" and "dhcpd"
@@ -121,6 +121,10 @@ The collection currently contains the following 21 scripts:
     - list relevant devices (hard drives, USB storage devices, SD cards)
       currently mounted
     - depends on: awk, bash, grep, mount
+
+* normalize.pl
+    - rename files containing spaces and/or German umlauts
+    - depends on: perl
 
 * purge.sh
     - delete cached or orphaned packages
