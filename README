@@ -1,39 +1,155 @@
-This is a bundle of various unrelated and eventually useful bash (and perl)
-scripts. Most of them are some kind of "quick and dirty" approaches and
-are not sophisticated or mature at all. Some will work only for specific
-operating systems (as written for Arch Linux) and hardware "out of the box"
-and need to be adapted for the appropriate configuration.
-Most scripts are just wrappers around other software.
+GENERAL:
+This is a collection of various unrelated bash (and perl) scripts.
+
+The scripts had initially been written for Arch Linux. Some may not work
+"out of the box" on your machine as some files could reside at different
+locations or some software may not be present on your system.
+A lot of scripts are wrappers around other Linux command line tools, some
+are one-liners and only few are a little bit more sophisticated somehow.
+
+Feel free to use the source codes as "example" to write your own tools
+working for your configuration!
 
 
-The bundle currently contains the following 17 scripts:
+INSTALLATION:
+In order to enhance your daily Linux experience place the scripts under
+"/usr/local/bin" and remove the respective file name extention.
 
-* ap.sh - start/stop a software access point with "hostapd" and "dhcpd"
-* aphwaddr.sh - print the hardware address (MAC address) of the wireless
-    access point currently connected to
-* blctl.sh - control backlight brightness
-* ddg.sh - open "firefox" and search with DuckDuckGo search engine from
-    command line
-* dns.sh - get IP address for specific host name and vice versa
-    using "host" tool
-* fdiff.sh - wrapper around "diff" system tool to get more specialized
-    output
-* hex.pl - convert plain ASCII string to ASCII hexadecimal representation
-    and vice versa
-* inet.sh - a "netctl" wrapper to start the default or a specified network
-    profile
-* invoke.sh - start any program (including command line arguments) from
-    terminal as background task with definitely no output to STDOUT or
-    STDERR
-* ipstat.sh - print active network interface, local IP address, public
-    IP address, and TOR exit node IP if any
-* isgd.sh - command line URL shortener (https://is.gd)
-* refrestore.sh - reopen hyperlinks stored in separate ".href" files or
-    read file containing several links (one per line)
-* tinyurl.sh - command line URL shortener (https://tinyurl.com)
-* unitconv.sh - unit conversion tool; wrapper around "units"
-* userlist.sh - print all users from passwd file
-* volctl.sh - volume (speaker/headphone) controller; wrapper around
-    "amixer"
-* wikipedia.sh - open specific Wikipedia article from command line
-    (support for German and English language but easily extendable)
+For example if you want to use the tool "battery.sh" on your system
+you may "install" it using:
+
+    $ cp /home/<user>/Downloads/local-bin/battery.sh /usr/local/bin/battery
+
+To get your battery status you can then simply run:
+
+    $ battery
+
+Alternatively you could create a symbolic link to the script which would
+do the same trick:
+
+    $ ln -sv /home/<user>/Downloads/local-bin/battery.sh /usr/local/bin/battery
+
+Of course you will need to make the tools executable first:
+
+    $ chown <user> <script>
+    $ chmod 710 <script>
+
+(Substitute "<user>" with your username and "<script>" with the respective
+ script you want to set the "execute" flag for. If you did not download the
+ scripts to your "Downloads" folder you need change the path to the scripts,
+ as well, obviously.)
+
+
+DESCRIPTION:
+The collection currently contains the following 21 scripts:
+
+* ap.sh
+    - start/stop a software access point with "hostapd" and "dhcpd"
+    - LICENSE: GPLv3
+    - depends on: bash, dhcpd, gawk, grep, hostapd, ip, iptables, iw, netctl,
+                  sysctl
+
+* aphwaddr.sh
+    - print the hardware address (MAC address) of the wireless
+      access point currently connected to
+    - NOTE: assumes "netctl" is used for managing wireless connections!
+    - depends on: bash, netctl, iw
+
+* battery.pl
+    - prints the capacity (percentage) of one or two installed
+      batteries and their charging status
+    - if two batteries are installed a cumulated capacity is calculated
+    - NOTE: uses the design capacity as maximium, thus 100% may never be
+      reached (this can be changed easily
+    - NOTE: you may need to change the path the battery files
+    - depends on: perl
+
+* cpall.sh
+    - copy all files from one location to another while optionally
+      prepending/appending prefix/suffix to the copied files
+    - depends on: bash, cp
+
+* ddg.sh
+    - open "firefox" and search a pattern with DuckDuckGo search engine
+      from command line
+    - depends on: firefox, sed
+
+* dns.sh
+    - get IP address for specific host name and vice versa using "host" tool
+    - depends on: awk, bash, head, host, perl, sed
+
+* fdiff.sh
+    - wrapper around "diff" system tool to get more specialized output
+    - depends on: awk, bash, diff
+
+* hex.pl
+    - convert plain ASCII string to ASCII hexadecimal representation
+      and vice versa
+    - depends on: perl
+
+* histdel.sh
+    - clear "bash" history of current user
+    - depends on: bash
+
+* ifinfo.sh
+    - extracts information about the network interface currently used
+      and assigned IP addresses
+    - depends on: awk, bash, grep, ip, wc
+
+* invoke.sh
+    - start any program (including arguments) from command line
+      as background task with definitely no output
+    - most useful for GUI programs
+    - depends on: bash
+
+* ipstat.sh
+    - print active network interface, local IP address, public
+      IP address, and TOR exit node IP address if any
+    - depends on: awk, bash, curl, grep, ip, ps, sed
+
+* isgd.sh
+    - command line URL shortener using <https://is.gd>
+    - depends on: bash, curl, grep, perl, ps
+
+* makegen.sh
+    - generate a skeleton Makefile project
+    - generates the Makefile, a main C source file and the directories
+      "./src", "./obj" and "./bin"
+    - depends on: bash, touch
+
+* mounts.sh
+    - list relevant devices (hard drives, USB storage devices, SD cards)
+      currently mounted
+    - depends on: awk, bash, grep, mount
+
+* purge.sh
+    - delete cached or orphaned packages
+    - for use with "pacman" package manager on Arch Linux based systems
+    - depends on: awk, bash, du, ls, pacman, perl, tr, wc
+
+* refrestore.sh
+    - reopen hyperlinks stored in separate ".href" files or
+      a single file containing one hyperlink per line
+    - depends on: bash, cd, firefox
+
+* rmscreen.sh
+    - removes the last screenshot accidently taken
+    - NOTE: needs to be adapted in order to work with your screenshot taking
+      application
+    - depends on: bash, date, head, ls, rm
+
+* tinyurl.sh
+    - command line URL shortener using <https://tinyurl.com>
+    - depends on: bash, curl, grep, perl
+
+* trackpad.sh
+    - disables/ reenables your trackpad device (and ThinkPad TrackPoint device
+      if available)
+    - if no parameter is given the trackpad is disable if an optical USB mouse
+      is detected and disabled if there is no such mouse
+    - depends on: awk, bash, grep, xinput
+
+* wikipedia.sh
+    - open a specific Wikipedia article from command line
+    - support for German and English language but easily extendable
+    - depends on: bash, firefox, sed, tr
