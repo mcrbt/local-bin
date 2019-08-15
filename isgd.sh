@@ -10,7 +10,7 @@ which ps &> /dev/null
 if [ $? -ne 0 ]; then echo "command \"ps\" not found on the system"; exit 2; fi
 
 if [ $# -ne 1 ]; then echo "usage: $(basename $0) <url>"; exit 1; fi
-#curl --silent "https://is.gd/create.php?url=$1" | grep "short_url" | sed 's/.* value="\(https:\/\/is.gd\/.*\)".*/\1/' | awk '{print $1}' | sed 's/\(.*\)"/\1/'
+
 if [ "$(ps -e | grep tor)" == "" ]; then
 	curl --silent "https://is.gd/create.php?url=$1" | grep "short_url" | perl -pe 's/.*value="(https:\/\/is\.gd\/.*?)".*/\1/'
 else
