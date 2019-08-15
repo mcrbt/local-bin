@@ -52,8 +52,7 @@ The collection currently contains the following 22 scripts:
 * aphwaddr.sh
     - print the hardware address (MAC address) of the wireless
       access point currently connected to
-    - NOTE: assumes "netctl" is used for managing wireless connections!
-    - depends on: bash, netctl, iw
+    - depends on: awk, bash, grep, ip, iw
 
 * battery.pl
     - prints the capacity (percentage) of one or two installed
