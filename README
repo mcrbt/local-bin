@@ -32,16 +32,16 @@ do the same trick:
 Of course you will need to make the tools executable first:
 
     $ chown <user> <script>
-    $ chmod 710 <script>
+    $ chmod 755 <script>
 
 (Substitute "<user>" with your username and "<script>" with the respective
  script you want to set the "execute" flag for. If you did not download the
- scripts to your "Downloads" folder you need change the path to the scripts,
+ scripts to your "Downloads" folder you need to change the path to the scripts,
  as well, obviously.)
 
 
 DESCRIPTION:
-The collection currently contains the following 22 scripts:
+The collection currently contains the following 23 scripts:
 
 * ap.sh
     - start/stop a software access point with "hostapd" and "dhcpd"
@@ -115,6 +115,11 @@ The collection currently contains the following 22 scripts:
     - generates the Makefile, a main C source file and the directories
       "./src", "./obj" and "./bin"
     - depends on: bash, touch
+
+* manline.sh
+    - view Linux manual pages online if not intalled locally
+    - make your browser connect to <https://linux.die.net/man>
+    - depends on: basename, firefox
 
 * mounts.sh
     - list relevant devices (hard drives, USB storage devices, SD cards)
