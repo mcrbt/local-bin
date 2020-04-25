@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-my $VERSION = "0.3.0";
+my $VERSION = "0.3.1";
 my $mvno = 0;
 
 sub basename
@@ -65,6 +65,12 @@ sub normalize
 	$name =~ s/ö/oe/g;
 	$name =~ s/ü/ue/g;
 	$name =~ s/ß/ss/g;
+	$name =~ s/á|à/a/g;
+	$name =~ s/é|è/e/g;
+	$name =~ s/í|ì/i/g;
+	$name =~ s/ó|ò/o/g;
+	$name =~ s/ú|ù/u/g;
+	$name =~ s/_-_/_/g;
 	$name =~ s/_+/_/g;
 	$name =~ s/_+\./\./g;
 	return $name;
