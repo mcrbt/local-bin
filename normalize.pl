@@ -3,12 +3,39 @@
 use strict;
 use warnings;
 
+my $VERSION = "0.3.0";
 my $mvno = 0;
+
+sub basename
+{
+	my $name = shift;
+	my $len = length $name;
+	my $idx = rindex $name, "/";
+
+	if(!defined $idx) { return $idx; }
+	if($idx eq ($len - 1))
+	{
+		$name = substr $name, 0, ($len - 1);
+		$idx = rindex $name, "/";
+	}
+
+	$name = substr $name, ($idx + 1);
+	return $name;
+}
+
+sub version
+{
+	print "normalize version $VERSION\n";
+	print " - normalize filenames for UNIX systems\n";
+	print "copyright (c) 2020 Daniel Haase\n";
+}
 
 sub usage
 {
-	print "\nusage:  " . __FILE__ . " [-r] [<file>]\n";
-	print "        " . __FILE__ . " -h\n\n";
+	my $name = __FILE__;
+	version;
+	print "\nusage:  ", basename($name), " [-r] [<file>]\n";
+	print "        ", basename($name), " [-h | -V]\n\n";
 	print "  <file>\n";
 	print "      file which name will be normalized\n";
 	print "      can be a regular file or a directory\n";
@@ -19,6 +46,8 @@ sub usage
 	print "      if <file> is a directory normalize everything\n";
 	print "      inside that directory recursively in addition\n";
 	print "      to the name of the directory\n\n";
+	print "  -V | --version\n";
+	print "      print version information and exit\n\n";
 	print "  -h | --help\n";
 	print "      print this help message and exit\n\n";
 	exit shift;
@@ -28,12 +57,23 @@ sub normalize
 {
 	my $name = shift;
 	$name = lc $name;
+	$name =~ s/ - /_/g;
 	$name =~ s/ /_/g;
+	$name =~ s/\(|\)|\[|\]|\{|\}/_/g;
+	$name =~ s/'|"|\?|!|\$|\^|§|%|&|=|,|#|~|\+|\*|<|>|\|/_/g;
 	$name =~ s/ä/ae/g;
 	$name =~ s/ö/oe/g;
 	$name =~ s/ü/ue/g;
 	$name =~ s/ß/ss/g;
+	$name =~ s/_+/_/g;
+	$name =~ s/_+\./\./g;
 	return $name;
+}
+
+sub permit
+{
+	my $name = shift;
+	if($> eq 0) { chmod 0644, $name; }
 }
 
 sub move
@@ -45,7 +85,9 @@ sub move
 	{
 		rename $name, $norm;
 		$mvno += 1;
+		permit $norm;
 	}
+	else { permit $name; }
 }
 
 sub dive
@@ -60,8 +102,8 @@ sub dive
 	foreach my $file (@files)
 	{
 		if($file eq "." || $file eq "..") { next; }
-		if(-d "$dir/$file") { dive("$dir/$file"); }
 		move "$dir/$file";
+		if(-d "$dir/$file") { dive("$dir/$file"); }
 	}
 }
 
@@ -69,6 +111,7 @@ if(@ARGV == 0) { dive($ENV{'PWD'}); }
 elsif(@ARGV == 1)
 {
 	if($ARGV[0] eq "-h" || $ARGV[0] eq "--help") { usage 0; }
+	elsif($ARGV[0] eq "-V" || $ARGV[0] eq "--version") { version; exit 0; }
 	elsif($ARGV[0] =~ /-{1,2}.*/) { usage 1; }
 	else { move $ARGV[0]; }
 }
