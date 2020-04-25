@@ -4,7 +4,7 @@ TITLE="manline"
 AUTHOR="Daniel Haase"
 CRYEARS="2020"
 COPYRIGHT="copyright (c) $CRYEARS $AUTHOR"
-VERSION="0.1.0"
+VERSION="0.1.1"
 CALL="$0"
 
 function check_command
@@ -20,6 +20,7 @@ function print_version
 {
 	if [ -z "$TITLE" ]; then TITLE="$(basename $CALL)"; fi
 	echo "$TITLE version $VERSION"
+	echo " - open manual pages online at https://linux.die.net"
 	echo "$COPYRIGHT"
 }
 
