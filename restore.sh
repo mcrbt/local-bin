@@ -1,6 +1,32 @@
 #!/bin/bash
+##
+## restore - reopen hyperlinks read from ASCII file in firefox
+## Copyright (C) 2020 Daniel Haase
+##
+## This program is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
+##
 
 CWD=$(pwd)
+
+function checkcmd
+{
+	local c="$1"
+	if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
+	which "$c" &> /dev/null
+	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 1; fi
+	return 0
+}
 
 function open_link_files
 {
@@ -11,8 +37,6 @@ function open_link_files
 			link=$(cat $name)
 			echo "opening \"$link\"..."
 			firefox --new-tab "$link" &> /dev/null &
-			#if [ $? -ne 0 ]; then echo "failed to open link \"$link\""
-			#else sleep 1; fi
 			sleep 1
 		fi
 	done
@@ -25,14 +49,17 @@ function open_file_links
 	if [ ! -f $1 ] || [ -d $1 ]; then echo "file \"$1\" not found"; exit 1; fi
 
 	while read link; do
-		if [ "$link" == "" ] || [[ $link != http* ]]; then continue; fi
+		if [ -z "$link" ] || [[ $link != http* ]]; then continue; fi
 		echo "opening \"$link\"..."
 		firefox --new-tab "$link" &> /dev/null &
-		#if [ $? -ne 0 ]; then echo "failed to open link \"$link\""
-		#else sleep 1; fi
 		sleep 1
 	done < "$1"
 }
+
+checkcmd "basename"
+checkcmd "cat"
+checkcmd "firefox"
+checkcmd "sleep"
 
 if [ $# -eq 0 ]; then open_link_files $CWD
 elif [ $# -eq 1 ] && [[ "$1" == "-h" || "$1" == "--help" ]]; then
@@ -60,5 +87,4 @@ else
 	done
 fi
 
-#echo "done."
 exit 0
