@@ -42,7 +42,7 @@ Of course you will need to make the tools executable first:
 
 
 DESCRIPTION:
-The collection currently contains the following 25 scripts:
+The collection currently contains the following 26 scripts:
 
 * aphwaddr.sh
     - print the hardware address (MAC address) of the wireless
@@ -144,6 +144,12 @@ The collection currently contains the following 25 scripts:
     - make your browser connect to <https://linux.die.net/man>
     - NOTE: occasionally the server is not available
     - depends on: basename, bash, firefox
+
+* monitor.sh
+    - quick information about connected monitors
+    - wrapper around "xrandr"
+    - currently only supports operations "list" and "count"
+    - depends on: awk, basename, bash, xrandr
 
 * mounts.sh
     - list relevant devices (hard drives, USB storage devices, SD cards)
