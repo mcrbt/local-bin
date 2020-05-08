@@ -1,4 +1,21 @@
 #!/usr/bin/perl
+##
+## normalize - adapt file names for use with Linux file systems
+## Copyright (C) 2020 Daniel Haase
+##
+## This program is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
+##
 
 use strict;
 use warnings;
@@ -65,11 +82,11 @@ sub normalize
 	$name =~ s/ö/oe/g;
 	$name =~ s/ü/ue/g;
 	$name =~ s/ß/ss/g;
-	$name =~ s/á|à/a/g;
-	$name =~ s/é|è/e/g;
-	$name =~ s/í|ì/i/g;
-	$name =~ s/ó|ò/o/g;
-	$name =~ s/ú|ù/u/g;
+	$name =~ s/á|à|â/a/g;
+	$name =~ s/é|è|ê/e/g;
+	$name =~ s/í|ì|î/i/g;
+	$name =~ s/ó|ò|ô/o/g;
+	$name =~ s/ú|ù|û/u/g;
 	$name =~ s/_-_/_/g;
 	$name =~ s/_+/_/g;
 	$name =~ s/_+\./\./g;

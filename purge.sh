@@ -1,19 +1,30 @@
 #!/bin/bash
+##
+## purge - remove orphaned packages and cached files from "pacman"
+## Copyright (C) 2020 Daniel Haase
+##
+## This program is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
+##
 
-which du &> /dev/null
-if [ $? -ne 0 ]; then echo "command \"du\" not found"; exit 1; fi
-which awk &> /dev/null
-if [ $? -ne 0 ]; then echo "command \"awk\" not found"; exit 1; fi
-which ls &> /dev/null
-if [ $? -ne 0 ]; then echo "command \"ls\" not found"; exit 1; fi
-which wc &> /dev/null
-if [ $? -ne 0 ]; then echo "command \"wc\" not found"; exit 1; fi
-which tr &> /dev/null
-if [ $? -ne 0 ]; then echo "command \"tr\" not found"; exit 1; fi
-which pacman &> /dev/null
-if [ $? -ne 0 ]; then echo "command \"pacman\" not found"; exit 1; fi
-which perl &> /dev/null
-if [ $? -ne 0 ]; then echo "command \"perl\" not found"; exit 1; fi
+function checkcmd
+{
+	local c="$1"
+	if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
+	which "$c" &> /dev/null
+	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 1; fi
+	return 0
+}
 
 function compute_orphan_size
 {
@@ -155,4 +166,13 @@ function purge
 	echo "purged $(format_result $SUM_KB) in total"
 }
 
-purge; exit 0
+checkcmd "awk"
+checkcmd "du"
+checkcmd "ls"
+checkcmd "pacman"
+checkcmd "perl"
+checkcmd "tr"
+checkcmd "wc"
+
+purge
+exit 0
