@@ -5,7 +5,7 @@
 
 This is a collection of various unrelated `bash`, `perl`, and `fish` scripts.
 
-The scripts had initially been written for `Arch Linux`. Some may not work
+The scripts had initially been written for *Arch Linux*. Some may not work
 "out of the box" on your machine as some files could reside at different
 locations or some software may not be present on your system.
 A lot of scripts are wrappers around other Linux command line tools, some
