@@ -42,7 +42,7 @@ Of course you will need to make the tools executable first:
 
 
 DESCRIPTION:
-The collection currently contains the following 26 scripts:
+The collection currently contains the following 27 scripts:
 
 * aphwaddr.sh
     - print the hardware address (MAC address) of the wireless
@@ -93,6 +93,15 @@ The collection currently contains the following 26 scripts:
 * dns.sh
     - get IP address for specific host name and vice versa using "host" tool
     - depends on: awk, basename, bash, head, host, perl, sed
+
+* doxystrip.sh
+    - strip documentation and comments from a doxygen "Doxyfile"
+    - a default Doxyfile can be created using the command "doxygen -g"
+      which contains lots of very useful documentation comments
+    - unfortunately that file is approximately 2500 lines and 112 kB
+    - doxystrip remove comment from the Doxyfile to let it only be
+      about 330 lines and 12 kB
+    - depends on: bash, date, mv, rm
 
 * fdiff.sh
     - wrapper around "diff" system tool to get more specialized output
