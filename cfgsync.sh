@@ -18,11 +18,23 @@
 ##
 
 TITLE="cfgsync"
-VERSION="0.1.0"
+VERSION="0.2.2"
 AUTHOR="Daniel Haase"
-QUIET=1
 
 APP="$0"
+synct=0
+
+## CONFIGURATION SECTION
+
+## default list of configuration files to synchronize
+## these files are synchronized if no files are provided via command line
+SYNC_LIST=".bashrc .xinitrc .config/openbox .screenlayout"
+
+## set to 1 to omit most output
+QUIET=0
+
+## END CONFIGURATION SECTION
+
 
 function version
 {
@@ -35,7 +47,15 @@ function usage
 {
 	version
 	echo ""
-	echo "usage:  $APP [--version | --help]"
+	echo "usage:  $APP [<filename1> [<filename2> [...]]]"
+	echo "        $APP [--version | --help]"
+	echo ""
+	echo "  <filenameN>"
+	echo "    a (configuration) file name or directory can be provided"
+	echo "    via command line, otherwise the list of files configured"
+	echo "    \"\$SYNC_LIST\" is synchronized"
+	echo "    <filename> must be file or directory relative to \"/root/\","
+	echo "    and must not start with a dot (\".\") or a dash (\"-\")"
 	echo ""
 	echo "  -V | --version"
 	echo "    print version information"
@@ -59,20 +79,51 @@ function sync
 	local pth="$1"
 	if [ $# -eq 0 ] || [ -z "$pth" ]; then return 1; fi
 	if [[ "$pth" == "/root/"* ]]; then pth="${pth:6}"; fi
-	if [ ! -e "/root/$pth" ]; then echo "file \"/root/$pth\" not found"; return 1; fi
+
+	if [[ "$pth" == ".."* ]]; then
+		echo "accessing paths not under \"/root/\" is prohibited"
+		return 1
+	fi
+
+	if [ ! -e "/root/$pth" ]; then
+		echo "file \"/root/$pth\" not found"
+		return 1
+	fi
+
 	local dir="$(dirname $pth)"
 
 	for user in /home/*; do
 		if [ ! -d "$user/$dir" ]; then
 			if [ "$dir" != "." ] && [ "$dir" != ".." ]; then
-				if [ $QUIET -eq 0 ]; then echo "creating directory \"$user/$dir\"..."; fi
+				if [ $QUIET -eq 0 ]; then
+					echo "creating directory \"$user/$dir\"..."
+				fi
+
 				mkdir -p "$user/$dir"
 			fi
 		fi
 
-		if [ $QUIET -eq 0 ]; then echo "copying \"$pth\" to \"$user/$pth\"..."; fi
+		if [ $QUIET -eq 0 ]; then
+			echo "copying \"/root/$pth\" to \"$user/$pth\"..."
+		fi
+
 		cp -ru "/root/$pth" "$user/$pth"
+		synct=$((synct + 1))
 	done
+}
+
+function sync_all
+{
+	local files=("$@")
+	if [ ${#files[@]} -eq 0 ]; then return 0; fi
+
+	for f in "${files[@]}"; do
+		if [[ "$f" == "-"* ]]; then continue; fi
+		#if [ $QUIET -eq 0 ]; then echo "synchronizing \"$f\"..."; fi
+		sync "$f"
+	done
+
+	return 0
 }
 
 checkcmd "basename"
@@ -87,16 +138,15 @@ if [ $EUID -ne 0 ]; then
 	exit 1
 fi
 
-if [ $# -eq 1 ]; then
+if [ $# -gt 0 ]; then
 	if [ "$1" == "-V" ] || [ "$1" == "--version" ]; then version; exit 0
 	elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then usage; exit 0
-	else usage; exit 3; fi
+	else sync_all $@; fi
+else sync_all $SYNC_LIST; fi
+
+if [ $QUIET -eq 0 ]; then
+	if [ $synct -eq 0 ]; then echo "done"
+	elif [ $synct -eq 1 ]; then echo "$synct file synchronized"
+	else echo "$synct files synchronized"; fi
 fi
-
-#sync ".bashrc"
-#sync ".xinitrc"
-#sync ".config/openbox"
-#sync ".screenlayout"
-
-if [ $QUIET -eq 0 ]; then echo "done"; fi
 exit 0

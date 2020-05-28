@@ -11,7 +11,7 @@ locations or some software may not be present on your system.
 A lot of scripts are wrappers around other Linux command line tools, some
 are almost one-liners and only few are a little bit more sophisticated somehow.
 
-All scripts are licensed under the `GNU General Public License (GPL), version 3`.
+All scripts are licensed under the **GNU General Public License**, version 3.
 
 Feel free to use the source codes as "example" to write your own tools
 working for your configuration.
@@ -75,15 +75,19 @@ The collection currently contains the following **27 scripts**:
 * **cfgsync.sh**
     - copy e.g. configuration files of user `root` to all other user's home
       directories
+    - configuration directories (`.config/openbox/`) can be copied recursively
     - intended for single user systems with an additional non-privileged
       user, e.g. to execute riskier tasks
     - allows to only modify the configuration file of user root and then to
       synchronize with the other user accounts that have a home directory under
       `/home/`
     - configuration is to be done within the script using the global constant
-      `QUIET` to control *verbosity*, and the respective calls to the `sync`
-      function passing a path to a file or directory (with or without `/root/`
-      prefix)
+      `QUIET` to control *verbosity*, and `SYNC_LIST` for a space (' ')
+      separated list of file names (with or without `/root/` prefix)
+    - *alternatively* to the files given in `SYNC_LIST`, filenames (resp.
+      directories) can be provided via command line, each as its own argument
+      (e.g. `$ cfgsync .bashrc .xinitrc`; see also `$ cfgsync --help` for
+      details)
     - *NOTE*: use this script with care as it is intended to override existing
       configuration files of local users
     - depends on: `basename`, `bash`, `cp`, `dirname`, `mkdir`
