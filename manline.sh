@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## manline - open manual pages online at https://linux.die.net
+## manline - open manual pages online at https://www.man7.org
 ## Copyright (C) 2020 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ TITLE="manline"
 AUTHOR="Daniel Haase"
 CRYEARS="2020"
 COPYRIGHT="copyright (c) $CRYEARS $AUTHOR"
-VERSION="0.1.1"
+VERSION="0.2.0"
 CALL="$0"
 
 function checkcmd
@@ -37,7 +37,7 @@ function print_version
 {
 	if [ -z "$TITLE" ]; then TITLE="$(basename $CALL)"; fi
 	echo "$TITLE version $VERSION"
-	echo " - open manual pages online at https://linux.die.net"
+	echo " - open manual pages online at https://www.man7.org"
 	echo "$COPYRIGHT"
 }
 
@@ -46,7 +46,7 @@ function print_usage
 	if [ -z "$TITLE" ]; then TITLE="$(basename $CALL)"; fi
 	print_version
 	echo ""
-	echo "show Linux manual pages online under <https://linux.die.net/man>"
+	echo "show Linux manual pages online under <https://www.man7.org>"
 	echo "for man pages not installed locally"
 	echo ""
 	echo "usage:  $TITLE [<section>] <page>"
@@ -80,5 +80,18 @@ elif [ $# -eq 1 ]; then
 elif [ $# -eq 0 ]; then print_usage; exit 0
 else print_usage; exit 2; fi
 
-firefox "https://linux.die.net/man/$SC/$PG" &> /dev/null &
+if [ -z "$PG" ] || [[ "$PG" == "-"* ]]; then
+	echo "invalid manual page \"$PG\""
+	exit 2
+fi
+
+if [ -z "$SC" ]; then SC=1
+elif [[ "$SC" == "-"* ]]; then
+	echo "invalid manual section \"$SC\""
+	exit 2
+fi
+
+firefox "https://www.man7.org/linux/man-pages/man${SC}/${PG}.${SC}.html" &> /dev/null &
+if [ $? -ne 0 ]; then echo "failed to open manual page of \"$PG\""; exit 3; fi
+
 exit 0

@@ -169,8 +169,7 @@ The collection currently contains the following **27 scripts**:
 * **manline.sh**
     - view Linux *manual pages* online
     - make your browser (`firefox`) connect to
-      &lt;[https://linux.die.net/man](https://linux.die.net/man)&gt;
-    - *NOTE*: occasionally the server is not available
+      &lt;[https://www.man7.org/linux/man-pages](https://www.man7.org/linux/man-pages/)&gt;
     - depends on: `basename`, `bash`, `firefox`
 
 * **monitor.sh**
