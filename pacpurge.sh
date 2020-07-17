@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## purge - remove orphaned packages and cached files from "pacman"
+## pacpurge - remove orphaned packages and cached files from "pacman"
 ## Copyright (C) 2020 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify

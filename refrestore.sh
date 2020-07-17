@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## restore - reopen hyperlinks read from ASCII file in firefox
+## refrestore - reopen hyperlinks read from ASCII file in firefox
 ## Copyright (C) 2020 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
