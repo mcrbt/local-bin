@@ -104,12 +104,12 @@ The collection currently contains the following **27 scripts**:
       prepending or appending a prefix or suffix to the copied files
     - depends on: `basename`, `bash`, `cp`
 
-* **`ddg.sh`**
+* **`[ddg.sh](https://github.com/mcrbt/local-bin/blob/master/ddg.sh)`**
     - open `firefox` and search a pattern with *DuckDuckGo* search engine
       from command line
     - depends on: `bash`, `firefox`, `sed`
 
-* **`dict.cc`**
+* [**`dictcc.sh`**](https://github.com/mcrbt/local-bin/blob/master/dictcc.sh)
     - translate a pattern on &lt;[https://www.dict.cc](https://www.dict.cc)&gt;
     - the pattern is supplied as command line arguments and can consist of
       multiple words
