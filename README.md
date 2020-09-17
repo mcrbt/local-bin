@@ -219,7 +219,7 @@ The collection currently contains the following **27 scripts**:
 
 * [**`trackpad.sh`**](https://github.com/mcrbt/local-bin/blob/master/trackpad.sh)
     - disables/ re-enables the *trackpad* device (and the *TrackPoint&reg;*
-      device of *Lenovo&reg; ThinkPad&reg;*s if available)
+      device of *Lenovo&reg; ThinkPad&reg;* laptops if available)
     - if no parameter is given the *trackpad* is disabled if an *optical USB
       mouse* is detected and enabled if there is no such mouse
     - depends on: `basename`, `bash`, `grep`, `xinput`
