@@ -202,7 +202,7 @@ The collection currently contains the following **27 scripts**:
     - depends on: `awk`, `bash`, `du`, `ls`, `pacman`, `perl`, `tr`, `wc`
 
 * [**`refrestore.sh`**](https://github.com/mcrbt/local-bin/blob/master/refrestore.sh)
-    - reopen hyperlinks stored in separate "`.href`" files or
+    - reopen hyperlinks stored in separate "`.href`" or "`.url`" files or
       a single file containing one hyperlink per line
     - depends on: `basename`, `bash`, `cat`, `firefox`, `sleep`
 
