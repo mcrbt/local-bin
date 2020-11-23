@@ -138,9 +138,9 @@ The collection currently contains the following **28 scripts**:
     - depends on: `bash`
 
 * [**`ifinfo.sh`**](https://github.com/mcrbt/local-bin/blob/master/ifinfo.sh)
-    - extract information about the network interface currently used
+    - extract information about the default network interface
       and its assigned IP addresses
-    - depends on: `awk`, `bash`, `grep`, `ip`, `wc`
+    - depends on: `awk`, `bash`, `head`, `ip`, `wc`
 
 * [**`invoke.sh`**](https://github.com/mcrbt/local-bin/blob/master/invoke.sh)
     - start any program, including its arguments, from command line

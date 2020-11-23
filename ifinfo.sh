@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## ifinfo - get addresses registered for current network interface
+## ifinfo - get ip addresses registered for default network interface
 ## Copyright (C) 2020 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
@@ -22,34 +22,44 @@ function checkcmd
 	local c="$1"
 	if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
 	which "$c" &> /dev/null
-	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 1; fi
-	return 0
+	if [ $? -eq 0 ]; then return 0
+	else echo "command \"$c\" not found"; exit 1; fi
 }
 
 checkcmd "awk"
-checkcmd "grep"
+checkcmd "head"
 checkcmd "ip"
 checkcmd "wc"
 
-IF=$(ip route | awk '/^default/ {print $5}')
+if [ -z "$(ip route)" ]; then
+	echo "no network connection detected"
+	exit 2
+fi
+
+IF=$(ip route | awk '/^default/ {print $5}' | head -n 1)
+if [ -z "$IF" ]; then
+	echo "failed to get default network interface"
+	exit 2
+fi
+
 IFMAC=$(ip address show dev $IF | awk '/link\/ether/ {print $2}')
-IP4no=$(ip address show dev $IF | awk '{print $1}' | awk '/^inet$/' | wc -l)
-IP6no=$(ip address show dev $IF | awk '{print $1}' | awk '/^inet6$/' | wc -l)
+IP4NO=$(ip address show dev $IF | awk '/inet[^6]/' | wc -l)
+IP6NO=$(ip address show dev $IF | awk '/inet6/' | wc -l)
 
 echo ""
 echo "interface $IF (${IFMAC})"
 
-if [ $IP4no -gt 0 ]; then
+if [ $IP4NO -gt 0 ]; then
 	echo ""
-	echo "ipv4 ($IP4no):"
-	IPS=$(ip address show dev $IF | grep inet | grep -v inet6 | awk '{print $2}')
+	echo "ipv4 ($IP4NO):"
+	IPS=$(ip address show dev $IF | awk '/inet[^6]/ {print $2}')
 	for i in $IPS; do echo "    $i"; done
 fi
 
-if [ $IP6no -gt 0 ]; then
+if [ $IP6NO -gt 0 ]; then
 	echo ""
-	echo "ipv6 ($IP6no):"
-	IPS=$(ip address show dev $IF | grep inet6 | awk '{print $2}')
+	echo "ipv6 ($IP6NO):"
+	IPS=$(ip address show dev $IF | awk '/inet6/ {print $2}')
 	for i in $IPS; do echo "    $i"; done
 fi
 
