@@ -29,27 +29,33 @@ function checkcmd
 checkcmd "awk"
 checkcmd "curl"
 checkcmd "grep"
+checkcmd "head"
 checkcmd "ip"
 checkcmd "ps"
-checkcmd "sed"
+checkcmd "systemctl"
 
 if [ -z "$(ip route)" ]; then
 	echo "no connection detected"
 	exit 0
 fi
 
-IF=$(ip route | awk '/^default/ {print $5}')
-MD=$(echo $IF | sed 's/\(.\).*/\1/')
+IF=$(ip route | awk '/^default/ {print $5}' | head -n 1)
 
 LAN=$(ip route show dev $IF | awk '/link/ {print $7}')
 WAN=$(curl --silent ipinfo.io/ip)
 
 if [ -z "$(ps -e | grep tor)" ]; then TOR="tor not running"
-else TOR=$(curl --proxy socks5://localhost:9050 --silent ipinfo.io/ip); fi
+else
+	ACTIVE=$(systemctl status tor | awk '/Active/ {print $2" "$3}')
+	if [ "$ACTIVE" == "active (running)" ]; then
+		TOR=$(curl --proxy socks5://localhost:9050 --silent ipinfo.io/ip)
+	else TOR="tor not running"; fi
+fi
 
 echo ""
+
 ## this is little professional but holds in most of the cases:
-if [ "$MD" == "w" ]; then echo "active default interface: $IF (wireless)"
+if [[ "$IF" == "w"* ]]; then echo "active default interface: $IF (wireless)"
 else echo "active default interface: $IF (wired)"; fi
 echo ""
 echo "Private LAN IP:      $LAN"

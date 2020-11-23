@@ -152,7 +152,7 @@ The collection currently contains the following **28 scripts**:
 * [**`ipstat.sh`**](https://github.com/mcrbt/local-bin/blob/master/ipstat.sh)
     - print active network interface, private IP address (LAN),
       public IP address (WAN), and TOR exit node IP address, if any
-    - depends on: `awk`, `bash`, `curl`, `grep`, `ip`, `ps`, `sed`
+    - depends on: `awk`, `bash`, `curl`, `grep`, `head`, `ip`, `ps`, `systemctl`
 
 * [**`isgd.sh`**](https://github.com/mcrbt/local-bin/blob/master/isgd.sh)
     - command line URL shortener using &lt;[https://is.gd](https://is.gd)&gt;
