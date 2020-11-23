@@ -6,7 +6,7 @@
 This is a collection of various unrelated `bash`, `perl`, and `fish` scripts.
 
 The scripts had initially been written for *Arch Linux*. Some may not work
-"out of the box" on every machine as some files could reside at different
+out of the box on every machine as some files could reside at different
 locations or some software may not be present on the system, at all.
 A lot of scripts are wrappers around other Linux command line tools, some
 are almost one-liners and only few are a little bit more sophisticated somehow.
@@ -19,13 +19,18 @@ for specific platforms and configuration.
 
 ## Installation
 
-In order to enhance daily Linux experience the scripts can be placed under
-`/usr/bin` or `/usr/local/bin` with their filename extension stripped.
+First of all, this repository needs to be cloned to a local directory. After
+that, scripts being used need to be made executable.
 
-For example, to use the tool `battery.pl`, it can be "installed" by running:
+In order to enhance daily Linux experience, the scripts can be placed under
+`/usr/bin` or `/usr/local/bin`, with their filename extension stripped.
+
+For example, to use the tool `battery.pl`, it can be installed by running:
 
 ```
-$ cp /home/<user>/Downloads/local-bin/battery.pl /usr/local/bin/battery
+$ git clone https://github.com/mcrbt/local-bin.git $HOME
+$ chmod 755 battery.pl
+$ cp $HOME/local-bin/battery.pl /usr/local/bin/battery
 ```
 
 To get the battery status `battery.pl` can then simply be run as "native"
@@ -35,29 +40,17 @@ command:
 $ battery
 ```
 
-Alternatively a symbolic link to the script could be created which would
+Alternatively, a symbolic link to the script could be created, which would
 do the same trick:
 
 ```
-$ ln -sv /home/<user>/Downloads/local-bin/battery.pl /usr/local/bin/battery
+$ ln -sv $HOME/local-bin/battery.pl /usr/local/bin/battery
 ```
-
-Of course the tools need to be made executable first:
-
-```
-$ chmod 755 <script>
-```
-
-(*&lt;user&gt;* needs to be substituted with the respective username and
-*&lt;script&gt;* with the respective script to be set executable. If the
-scripts had not been downloaded to the `Downloads` folder but the
-repository was cloned elsewhere the path to the scripts needs to be
-changed in the above commands, as well, obviously.)
 
 
 ## Description
 
-The collection currently contains the following **27 scripts**:
+The collection currently contains the following **28 scripts**:
 
 * [**`aphwaddr.sh`**](https://github.com/mcrbt/local-bin/blob/master/aphwaddr.sh)
     - print hardware address (i.e. *MAC address*) of the wireless
@@ -216,6 +209,12 @@ The collection currently contains the following **27 scripts**:
     - command line URL shortener using
       &lt;[https://tinyurl.com](https://tinyurl.com)&gt;
     - depends on: `basename`, `bash`, `curl`, `grep`, `perl`
+
+* [**`torcircuit.sh`**](https://github.com/mcrbt/local-bin/blob/master/torcircuit.sh)
+    - open a new *TOR* circuit by restarting the `tor` service
+    - it is supposed that the `tor` daemon is already running
+    - when done, the old, as well as the new exit node IP address is printed
+    - depends on: `awk`, `bash`, `curl`, `grep`, `ip`, `ps`, `systemctl`, `tor`
 
 * [**`trackpad.sh`**](https://github.com/mcrbt/local-bin/blob/master/trackpad.sh)
     - disables/ re-enables the *trackpad* device (and the *TrackPoint&reg;*
