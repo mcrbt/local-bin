@@ -50,7 +50,7 @@ $ ln -sv $HOME/local-bin/battery.pl /usr/local/bin/battery
 
 ## Description
 
-The collection currently contains the following **28 scripts**:
+The collection currently contains the following **29 scripts**:
 
 * [**`aphwaddr.sh`**](https://github.com/mcrbt/local-bin/blob/master/aphwaddr.sh)
     - print hardware address (i.e. *MAC address*) of the wireless
@@ -191,8 +191,14 @@ The collection currently contains the following **28 scripts**:
 * [**`pacpurge.sh`**](https://github.com/mcrbt/local-bin/blob/master/pacpurge.sh)
     - delete cached or orphaned packages
     - for use with `pacman` package manager on *Arch Linux* based systems
-    - *TODO*: additional support for `AUR` package managers
+    - *TODO*: additional support for some `AUR` package managers
     - depends on: `awk`, `bash`, `du`, `ls`, `pacman`, `perl`, `tr`, `wc`
+
+* [**`pw.sh`**](https://github.com/mcrbt/local-bin/blob/master/pw.sh)
+    - generate passwords of configurable lengths
+    - wrapper around [`secpwgen`](https://github.com/itoffshore/secpwgen) from
+      [Zeljko Vrba](http://zvrba.net)
+    - depends on: `awk`, `bash`, `head`, `secpwgen`, `tail`
 
 * [**`refrestore.sh`**](https://github.com/mcrbt/local-bin/blob/master/refrestore.sh)
     - reopen hyperlinks stored in separate "`.href`" or "`.url`" files or
