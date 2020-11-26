@@ -50,7 +50,7 @@ $ ln -sv $HOME/local-bin/battery.pl /usr/local/bin/battery
 
 ## Description
 
-The collection currently contains the following **29 scripts**:
+The collection currently contains the following **30 scripts**:
 
 * [**`aphwaddr.sh`**](https://github.com/mcrbt/local-bin/blob/master/aphwaddr.sh)
     - print hardware address (i.e. *MAC address*) of the wireless
@@ -180,6 +180,16 @@ The collection currently contains the following **29 scripts**:
     - list relevant devices (hard drives, USB storage devices, SD cards)
       currently mounted
     - depends on: `awk`, `bash`, `grep`, `mount`
+
+* [**`mspmacro.sh`**](https://github.com/mcrbt/local-bin/blob/master/mspmacro.sh)
+    - search for C preprocessor macros or *special function register* declarations
+      in the specified (or default) MSP430 header file
+    - assumes the *Texas Instruments&reg;* `mspgcc` toolchain
+    - default MSP430 include path, as well as default target device (e.g.
+      `msp430f5529`) can be configured
+    - prints whatever the `grep` command returns, or "nothing found"
+    - example usage: `$ mspmacro msp430f5529 UCB0TXBUF`
+    - depends on: `bash`, `grep`
 
 * [**`normalize.pl`**](https://github.com/mcrbt/local-bin/blob/master/normalize.pl)
     - adapt file names for use with Linux file systems
