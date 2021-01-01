@@ -50,7 +50,7 @@ $ ln -sv $HOME/local-bin/battery.pl /usr/local/bin/battery
 
 ## Description
 
-The collection currently contains the following **30 scripts**:
+The collection currently contains the following **31 scripts**:
 
 * [**`aphwaddr.sh`**](https://github.com/mcrbt/local-bin/blob/master/aphwaddr.sh)
     - print hardware address (i.e. *MAC address*) of the wireless
@@ -203,6 +203,13 @@ The collection currently contains the following **30 scripts**:
     - for use with `pacman` package manager on *Arch Linux* based systems
     - *TODO*: additional support for some `AUR` package managers
     - depends on: `awk`, `bash`, `du`, `ls`, `pacman`, `perl`, `tr`, `wc`
+
+* [**`pdfalign.sh`**](https://github.com/mcrbt/local-bin/blob/master/pdfalign.sh)
+    - align all pages of a PDF document to *DIN A4* (210mm x 297mm) using `pdfjam`
+    - `pdfjam` uses `pdflatex` to modify PDF documents
+    - optionally sets PDF meta information *title*, and *author*
+    - depends on: `awk`, `bash`, `cp`, `file`, `grep`, `mv`, `pdfjam`, `pdflatex`,
+      `rm`, `sed`, `tr`
 
 * [**`pw.sh`**](https://github.com/mcrbt/local-bin/blob/master/pw.sh)
     - generate passwords of configurable lengths
