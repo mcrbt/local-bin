@@ -19,8 +19,8 @@
 
 TITLE="doxystrip"
 AUTHOR="Daniel Haase"
-VERSION="0.1.0"
-CRYRS="2020"
+VERSION="0.1.1"
+CRYRS="2020-2021"
 
 KEEP_SECTION_SEPARATORS=0
 CREATE_BACKUP=1
@@ -39,8 +39,8 @@ function checkcmd
 function version
 {
 	echo "$TITLE version $VERSION"
-	echo " - strip documentation and comments from doxygen \"Doxyfile\""
 	echo "copyright (c) $CRYRS $AUTHOR"
+	echo "strip documentation and comments from doxygen's \"Doxyfile\""
 }
 
 function usage
@@ -76,7 +76,7 @@ function usage
 	echo "    print this usage information"
 	echo ""
 	echo ""
-	echo "if no comments are provided $TITLE looks for a file named"
+	echo "if no arguments are provided, $TITLE looks for a file named"
 	echo "\"Doxyfile\" in the current directory"
 	echo ""
 }
