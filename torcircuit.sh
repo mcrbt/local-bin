@@ -1,7 +1,7 @@
 #!/bin/bash
 ##
 ## torcircuit - open a new TOR circuit
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020-2021 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 ## script title
 TITLE="torcircuit"
 ## script version
-VERSION="0.3.0"
+VERSION="0.3.1"
 
 ## test if command "$1" is installed; exit otherwise
 function checkcmd
@@ -93,10 +93,17 @@ if [ "$ACTIVE" != "active (running)" ]; then
 	exit 2
 fi
 
-## get old TOR exit node IP address by querying ipinfo.io through TOR
-TOR_OLD=$(curl --proxy socks5://localhost:9050 --silent ipinfo.io/ip)
-if [ $? -ne 0 ]; then
-	echo "failed to get old tor exit node ip address"
+## test whether there had been a previous TOR circuit
+ESTABL=$(systemctl status tor | grep 'Bootstrapped 100% (done): Done')
+if [ -z "${ESTABL}" ]; then
+	echo "no previous tor circuit established"
+	TOR_OLD="none"
+else
+	## get old TOR exit node IP address by querying ipinfo.io through TOR
+	TOR_OLD=$(curl --proxy socks5://localhost:9050 --connect-timeout 5 --silent ipinfo.io/ip)
+	if [ $? -ne 0 ]; then
+		echo "failed to get old tor exit node ip address"
+	fi
 fi
 
 ## restart TOR service
@@ -107,13 +114,24 @@ if [ $? -ne 0 ]; then
 fi
 
 ## wait until new TOR circuit is established
-sleep 2
+sleep 5
 
-## get new TOR exit node IP address by querying ipinfo.io through TOR
-TOR_NEW=$(curl --proxy socks5://localhost:9050 --silent ipinfo.io/ip)
-if [ $? -ne 0 ]; then echo "failed to get new tor exit node ip address"; fi
+## test whether a new TOR circuit could be established successfully
+ESTABL=$(systemctl status tor | grep 'Bootstrapped 100% (done): Done')
+if [ -z "${ESTABL}" ]; then
+	echo "failed to establish new tor circuit in time"
+	TOR_NEW="none"
+	RCODE=3
+else
+	## get new TOR exit node IP address by querying ipinfo.io through TOR
+	TOR_NEW=$(curl --proxy socks5://localhost:9050 --connect-timeout 5 --silent ipinfo.io/ip)
+	if [ $? -ne 0 ]; then
+		echo "failed to get new tor exit node ip address"
+		RCODE=3
+	else RCODE=0; fi
+fi
 
 ## print old and new public IP addresses
 echo "old exit node ip: $TOR_OLD"
 echo "new exit node ip: $TOR_NEW"
-exit 0
+exit $RCODE

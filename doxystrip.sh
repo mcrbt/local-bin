@@ -1,7 +1,7 @@
 #!/bin/bash
 ##
 ## doxystrip - strip documentation and comments from doxygen "Doxyfile"
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020-2021 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by

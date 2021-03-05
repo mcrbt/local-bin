@@ -254,7 +254,7 @@ The collection currently contains the following **31 scripts**:
 
 ## Copyright
 
-Copyright &copy; 2018-2020 Daniel Haase
+Copyright &copy; 2018-2021 Daniel Haase
 
 All scripts of `local-bin` are licensed under the
 **GNU General Public License**, version 3.
@@ -265,7 +265,7 @@ All scripts of `local-bin` are licensed under the
 ```
 
 local-bin - collection of various unrelated scripts
-Copyright (C) 2018-2020  Daniel Haase
+Copyright (C) 2018-2021  Daniel Haase
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
