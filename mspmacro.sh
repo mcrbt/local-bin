@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env -S bash
 ##
-## mspmacro - search for preprocessor macros in specific MSP430 header files
-## Copyright (C) 2020 Daniel Haase
+## mspmacro - search for macros and register in MSP430 device specific header files
+## Copyright (C) 2020-2021 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,12 +17,15 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
+set -efu
+set -o pipefail
+
 ## application constants
 TITLE="mspmacro"
-VERSION="0.1.0"
+VERSION="0.2.0"
 
 ## configuration constants
-DEVICE="msp430f5529"
+DEVICE="msp430f5438"
 INCLUDE="/opt/ti/mspgcc/include"
 PATTERN=""
 
@@ -39,7 +42,7 @@ function checkcmd
 function version
 {
 	echo "${TITLE} version ${VERSION}"
-	echo "copyright (c) 2020 Daniel Haase"
+	echo "copyright (c) 2020-2021 Daniel Haase"
 }
 
 ## print usage information
@@ -47,15 +50,15 @@ function usage
 {
 	version
 	echo ""
-	echo "usage:  ${TITLE} [<device>] <register>"
+	echo "usage:  ${TITLE} [<device>] <pattern>"
 	echo "        ${TITLE} [-V | -h]"
 	echo ""
 	echo "  <device>"
 	echo "    the full MSP430 device name (e.g. \"msp430f5529\")"
 	echo "    (defaults to \"${DEVICE}\")"
 	echo ""
-	echo "  <register>"
-	echo "    the name of the register, constant, or macro to search"
+	echo "  <pattern>"
+	echo "    the search pattern (register, macro, comment, ...)"
 	echo ""
 	echo "  -V | --version"
 	echo "    print version and copyright notice and exit"
@@ -95,7 +98,7 @@ if [ ! -f "${FILE}" ]; then
 fi
 
 ## retrieve result
-RESULT="$(grep "${PATTERN}" < "${INCLUDE}"/"${DEVICE}".h)"
+RESULT="$(grep "${PATTERN}" "${FILE}")"
 
 ## print result
 if [ -z "${RESULT}" ]; then echo "nothing found"
