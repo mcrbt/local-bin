@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env -S bash
 ##
 ## aphwaddr - get MAC address of wireless access point
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020-2021 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,13 +17,15 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
+set -euo pipefail
+
+## check if command "$1" is installed
 function checkcmd
 {
 	local c="$1"
-	if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
-	which "$c" &> /dev/null
-	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 2; fi
-	return 0
+	if [ $# -eq 0 ] || [ -z "${c}" ] \
+	|| command -v "${c}" &> /dev/null; then return 0
+	else echo "command \"${c}\" not found"; exit 1; fi
 }
 
 checkcmd "awk"
@@ -36,14 +38,14 @@ checkcmd "iw"
 if [ $# -eq 0 ]; then iface=""
 elif [ $# -eq 1 ]; then
 	if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
-		echo "usage:  $(basename $0) [<interface>]"
+		echo "usage:  $(basename "$0") [<interface>]"
 		exit 0
 	elif [[ "$1" == "-"* ]]; then
-		echo "usage:  $(basename $0) [<interface>]"
+		echo "usage:  $(basename "$0") [<interface>]"
 		exit 1
 	else iface="$1"; fi
 else
-	echo "usage:  $(basename $0) [<interface>]"
+	echo "usage:  $(basename "$0") [<interface>]"
 	exit 1
 fi
 
@@ -61,7 +63,7 @@ if [ -z "$phy" ]; then
 	exit 6
 fi
 
-if [ ! -z "$iface" ]; then
+if [ -n "$iface" ]; then
 	iswl=$(iw "$iface" info | awk '/Interface/ {print $2}')
 
 	if [ -z "$iswl" ]; then
@@ -87,7 +89,7 @@ fi
 HWADDR=$(iw dev "$iface" station dump | grep "Station" \
 	| awk '{print $2}')
 
-if [ ! -z "$HWADDR" ] && [ "$HWADDR" != " " ]; then
+if [ -n "$HWADDR" ] && [ "$HWADDR" != " " ]; then
 	echo "$HWADDR"
 	exit 0
 else
