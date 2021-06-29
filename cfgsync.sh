@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env -S bash
 ##
 ## cfgsync - copy configuration files of root to all local user directories
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020-2021 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 ##
 
 TITLE="cfgsync"
-VERSION="0.2.2"
+VERSION="0.2.3"
 AUTHOR="Daniel Haase"
 
 APP="$0"
@@ -28,7 +28,7 @@ synct=0
 
 ## default list of configuration files to synchronize
 ## these files are synchronized if no files are provided via command line
-SYNC_LIST=".bashrc .xinitrc .config/openbox .screenlayout"
+SYNC_LIST=".bashrc .xinitrc"
 
 ## set to 1 to omit most output
 QUIET=0
@@ -40,7 +40,7 @@ function version
 {
 	echo "$TITLE version $VERSION"
 	echo " - copy configuration files of root to all users"
-	echo "copyright (c) 2020 $AUTHOR"
+	echo "copyright (c) 2020-2021 $AUTHOR"
 }
 
 function usage
@@ -67,11 +67,10 @@ function usage
 
 function checkcmd
 {
-	local C="$1"
-	if [ $# -eq 0 ] || [ -z "$C" ]; then return 0; fi
-	which "$C" &> /dev/null
-	if [ $? -ne 0 ]; then echo "command \"$C\" not found"; exit 2; fi
-	return 0
+	local c="$1"
+	if [ $# -eq 0 ] || [ -z "${c}" ] \
+	|| command -v "${c}" &> /dev/null; then return 0
+	else echo "command \"${c}\" not found"; exit 1; fi
 }
 
 function sync
@@ -81,7 +80,7 @@ function sync
 	if [[ "$pth" == "/root/"* ]]; then pth="${pth:6}"; fi
 
 	if [[ "$pth" == ".."* ]]; then
-		echo "accessing paths not under \"/root/\" is prohibited"
+		echo "accessing filesystem root is prohibited"
 		return 1
 	fi
 
@@ -90,7 +89,8 @@ function sync
 		return 1
 	fi
 
-	local dir="$(dirname $pth)"
+	local dir
+	dir="$(dirname "$pth")"
 
 	for user in /home/*; do
 		if [ ! -d "$user/$dir" ]; then
@@ -114,7 +114,8 @@ function sync
 
 function sync_all
 {
-	local files=("$@")
+	local files
+	files=("$@")
 	if [ ${#files[@]} -eq 0 ]; then return 0; fi
 
 	for f in "${files[@]}"; do
@@ -131,7 +132,7 @@ checkcmd "cp"
 checkcmd "dirname"
 checkcmd "mkdir"
 
-APP=$(basename $APP)
+APP=$(basename "$APP")
 
 if [ $EUID -ne 0 ]; then
 	echo "please run \"$APP\" as user \"root\""
@@ -141,8 +142,8 @@ fi
 if [ $# -gt 0 ]; then
 	if [ "$1" == "-V" ] || [ "$1" == "--version" ]; then version; exit 0
 	elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then usage; exit 0
-	else sync_all $@; fi
-else sync_all $SYNC_LIST; fi
+	else sync_all "$@"; fi
+else sync_all "$SYNC_LIST"; fi
 
 if [ $QUIET -eq 0 ]; then
 	if [ $synct -eq 0 ]; then echo "done"
