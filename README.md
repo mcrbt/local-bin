@@ -3,7 +3,7 @@
 
 ## General
 
-This is a collection of various unrelated `bash`, `perl`, and `fish` scripts.
+This is a collection of various unrelated `bash` and `perl` scripts.
 
 The scripts had initially been written for *Arch Linux*. Some may not work
 out of the box on every machine as some files could reside at different
@@ -90,14 +90,6 @@ The collection currently contains the following **31 scripts**:
     - **CAUTION**: the script is intended to
       **override existing configuration files** of local users
     - depends on: `basename`, `bash`, `cp`, `dirname`, `mkdir`
-
-* [**`clfish.fish`**](https://github.com/mcrbt/local-bin/blob/master/clfish.fish)
-    - clear command history of the `fish` shell (i.e. *friendly interactive shell*)
-    - if `fish` is used within a `bash` environment, an additional command
-      for clearing `bash`'s history can be added, as well (see
-      [`histdel.sh`](https://github.com/mcrbt/local-bin/blob/master/histdel.sh),
-      for instance)
-    - depends on: `fish`
 
 * [**`cpall.sh`**](https://github.com/mcrbt/local-bin/blob/master/cpall.sh)
     - copy multiple files from one location to another, while optionally
@@ -210,6 +202,11 @@ The collection currently contains the following **31 scripts**:
     - optionally sets PDF meta information *title*, and *author*
     - depends on: `awk`, `bash`, `cp`, `file`, `grep`, `mv`, `pdfjam`, `pdflatex`,
       `rm`, `sed`, `tr`
+
+* [**`pgplookup.sh`**](https://github.com/mcrbt/local-bin/blob/master/pgplookup.sh)
+    - search a [key server](https://pgp.key-server.io) for PGP public keys
+	- **NOTE**: the key server regularly is not responding, or the request times out
+	- depends on: `bash`
 
 * [**`pw.sh`**](https://github.com/mcrbt/local-bin/blob/master/pw.sh)
     - generate passwords of configurable lengths

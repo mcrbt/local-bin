@@ -1,7 +1,7 @@
-#!/usr/bin/fish
+#!/bin/bash
 ##
-## clfish - clear fish history
-## Copyright (C) 2020 Daniel Haase
+## pgplookup - search keyserver for PGP keys
+## Copyright (C) 2021 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,6 +17,25 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-function clfish --description 'clear fish history'
-	echo "yes" | history clear 1> /dev/null $argv;
-end
+#VERSION="0.1.0"
+BROWSER="firefox --new-tab"
+SERVER="https://pgp.key-server.io"
+
+set -euo pipefail
+
+function checkcmd
+{
+	local c="${1%% *}"
+	if [ $# -eq 0 ] || [ -z "${c}" ] \
+	|| command -v "${c}" &> /dev/null; then return 0
+	else echo "command \"${c}\" not found"; exit 1; fi
+}
+
+checkcmd "${BROWSER}"
+
+OPT="search=${*// /+}&fingerprint=on&op=vindex"
+
+if [ -z "$*" ]; then eval "${BROWSER} ${SERVER} &> /dev/null &"
+else eval "${BROWSER} '${SERVER}/pks/lookup?${OPT}' &> /dev/null &"; fi
+
+exit 0
