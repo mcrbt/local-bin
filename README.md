@@ -205,13 +205,13 @@ The collection currently contains the following **32 scripts**:
 
 * [**`pgplookup.sh`**](https://github.com/mcrbt/local-bin/blob/master/pgplookup.sh)
     - search a [key server](https://pgp.key-server.io) for PGP public keys
-	- **NOTE**: the key server regularly is not responding
-	- depends on: `bash`
+    - **NOTE**: the key server regularly is not responding
+    - depends on: `bash`
 
 * [**`printers.sh`**](https://github.com/mcrbt/local-bin/blob/master/printers.sh)
-	- list network printers and their IP address
-	- wrapper around `lpstat`
-	- depends on: `cut`, `bash`, `lpstat`, `wc`
+    - list network printers and their IP address
+    - wrapper around `lpstat`
+    - depends on: `cut`, `bash`, `lpstat`, `wc`
 
 * [**`pw.sh`**](https://github.com/mcrbt/local-bin/blob/master/pw.sh)
     - generate passwords of configurable lengths
