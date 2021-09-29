@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env -S bash
 ##
-## ddg - search on DuckDuckGo from command line
-## Copyright (C) 2020 Daniel Haase
+## ddg - search the web with DuckDuckGo from command line
+## Copyright (C) 2020-2021 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,24 +17,27 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
+set -o errexit
+set -o nounset
+set -o pipefail
+
+export VERSION="3.0.0"
+BROWSER="firefox --new-tab"
+
 function checkcmd
 {
-	local c="$1"
-	if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
-	which "$c" &> /dev/null
-	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 1; fi
-	return 0
+	local c="${1%% *}"
+	if [ $# -eq 0 ] || [ -z "${c}" ] \
+	|| command -v "${c}" &> /dev/null; then return 0
+	else echo "command \"${c}\" not found"; exit 1; fi
 }
 
-checkcmd "firefox"
+checkcmd "${BROWSER}"
 checkcmd "sed"
 
-Q=$(echo "$@" | sed 's/ /+/g')
+QUERY=$(echo "$@" | sed -e 's/\+/%2B/g' -e 's/ /+/g')
+URL="https://start.duckduckgo.com"
 
-if [ "$Q" == "" ]; then
-	firefox --new-tab "https://start.duckduckgo.com" &> /dev/null &
-else
-	firefox --new-tab "https://start.duckduckgo.com/?q=$Q" &> /dev/null &
-fi
-
+if [ -n "${QUERY}" ]; then URL="${URL}/?q=${QUERY}"; fi
+eval "${BROWSER} ${URL}" &> /dev/null &
 exit 0
