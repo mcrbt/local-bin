@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ##
 ## battery - get capacity of installed batteries
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020-2021 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ use strict;
 use warnings;
 use utf8;
 
+use constant VERSION => "0.1.1";
 binmode(STDOUT, ":utf8");
 
 my $bat0 = "/sys/class/power_supply/BAT0/uevent";
