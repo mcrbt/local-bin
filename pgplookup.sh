@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env -S bash
 ##
 ## pgplookup - search keyserver for PGP keys
-## Copyright (C) 2021 Daniel Haase
+## Copyright (C) 2021, 2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,25 +17,36 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-#VERSION="0.1.0"
+#VERSION="0.1.1"
 BROWSER="firefox --new-tab"
 SERVER="https://pgp.key-server.io"
 
-set -euo pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
 
 function checkcmd
 {
 	local c="${1%% *}"
-	if [ $# -eq 0 ] || [ -z "${c}" ] \
-	|| command -v "${c}" &> /dev/null; then return 0
-	else echo "command \"${c}\" not found"; exit 1; fi
+
+	if [[ $# -eq 0 ]] \
+	|| [[ -z "${c}" ]] \
+	|| command -v "${c}" &>/dev/null; then
+		return 0
+	else
+		echo "command \"${c}\" not found"
+		exit 1
+	fi
 }
 
 checkcmd "${BROWSER}"
 
 OPT="search=${*// /+}&fingerprint=on&op=vindex"
 
-if [ -z "$*" ]; then eval "${BROWSER} ${SERVER} &> /dev/null &"
-else eval "${BROWSER} '${SERVER}/pks/lookup?${OPT}' &> /dev/null &"; fi
+if [[ -z "$*" ]]; then
+	eval "${BROWSER} ${SERVER} &>/dev/null &"
+else
+	eval "${BROWSER} '${SERVER}/pks/lookup?${OPT}' &>/dev/null &"
+fi
 
 exit 0
