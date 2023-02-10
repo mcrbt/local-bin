@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##
 ## dictcc - translate a pattern on <https://dict.cc>
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020, 2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,25 +17,33 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-BROWSER="firefox"
+set -o errexit
+set -o nounset
+set -o pipefail
 
-function checkcmd
+BROWSER="firefox --new-tab"
+
+function check_command
 {
-	local c="$1"
-	if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
-	which "$c" &> /dev/null
-	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 1; fi
-	return 0
+	local command="${1%% *}"
+
+	if [[ $# -eq 0 || -z "${command}" ]] \
+	|| command -v "${command}" &>/dev/null; then
+		return 0
+	else
+		echo "no such command \"${command}\""
+		exit 1
+	fi
 }
 
-checkcmd "sed"
-checkcmd "$BROWSER"
+check_command "sed"
+check_command "${BROWSER}"
 
-if [ $# -eq 0 ] || [ -z "$1" ]; then
-	$($BROWSER https://dict.cc/ &> /dev/null &)
+if [[ $# -eq 0 || -z "${1}" ]]; then
+	eval "${BROWSER} https://dict.cc/ &>/dev/null &"
 else
-	Q="$(echo $@ | sed 's/ /+/g')"
-	$($BROWSER "https://dict.cc/?s=$Q" &> /dev/null &)
+	QUERY="$*"
+	eval "${BROWSER} https://dict.cc/?s=${QUERY// /+} &>/dev/null &"
 fi
 
 exit 0
