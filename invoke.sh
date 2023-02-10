@@ -1,7 +1,7 @@
 #!/usr/bin/env -S bash
 ##
 ## invoke - start background process and suppress any output
-## Copyright (C) 2020-2021 Daniel Haase
+## Copyright (C) 2020-2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,14 +17,26 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-set -euo pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
 
-if [ $# -eq 0 ] || [ -z "$1" ]; then exit 0; fi
-while [ "$1" == "invoke" ]; do shift; done
+#VERSION="4.1.1"
 
-if [ $# -eq 0 ] || [ -z "$1" ]; then exit 0
-elif ! command -v "$1" &> /dev/null
-then echo "no such command \"$1\""; exit 1; fi
+while [[ $# -gt 0 && "${1}" == "${0}" ]]; do
+	shift
+done
 
-eval "$@" &> /dev/null &
+if [[ $# -eq 0 || -z "${1}" ]]; then
+	exit 0
+fi
+
+if ! command -v "${1}" &>/dev/null; then
+	echo "no such command \"${1}\""
+	exit 1
+fi
+
+nohup "$@" </dev/null &>/dev/null &
+disown &>/dev/null
+
 exit 0
