@@ -49,7 +49,7 @@ $ ln -sv $(pwd)/local-bin/battery.pl /usr/local/bin/battery
 
 ## Description
 
-The collection currently contains the following **32 scripts**:
+The collection currently contains the following **34 scripts**:
 
 * [**`adapt.pl`**](https://github.com/mcrbt/local-bin/blob/master/adapt.pl)
     - adapt names of foreign files for use with Linux filesystems
@@ -171,6 +171,12 @@ The collection currently contains the following **32 scripts**:
       [https://www.man7.org](https://www.man7.org/linux/man-pages/)
     - depends on: `basename`, `bash`, `firefox`
 
+* [**`mirrorgen.sh`**](https://github.com/mcrbt/local-bin/blob/master/mirrogen.sh)
+    - generate fresh pacman mirrorlist with reflector
+    - wrapper around [`reflector`](https://xyne.dev/projects/reflector)
+    - intended for *Arch Linux* systems or derivatives, with `pacman` package manager
+    - depends on: `cat`, `date`, `grep`, `mv`, `reflector`, `rm`
+
 * [**`monitor.sh`**](https://github.com/mcrbt/local-bin/blob/master/monitor.sh)
     - quick information about connected monitors
     - wrapper around `xrandr` to *list* or *count* available monitors
@@ -193,7 +199,7 @@ The collection currently contains the following **32 scripts**:
 
 * [**`pacpurge.sh`**](https://github.com/mcrbt/local-bin/blob/master/pacpurge.sh)
     - delete cached and orphaned packages
-    - for use on *Arch Linux* based systems, with `pacman` package manager, only
+    - intended for *Arch Linux* systems or derivatives, with `pacman` package manager
     - depends on: `awk`, `bash`, `du`, `ls`, `pacman`, `perl`, `tr`, `wc`
 
 * [**`pdfalign.sh`**](https://github.com/mcrbt/local-bin/blob/master/pdfalign.sh)
@@ -230,6 +236,11 @@ The collection currently contains the following **32 scripts**:
       (regards file naming conventions, and storage location)
     - depends on: `bash`, `date`, `head`, `ls`, `rm`
 
+* [**`space.sh`**](https://github.com/mcrbt/local-bin/blob/master/space.sh)
+    - list available storage space of relevant devices
+    - wrapper around [`df`](https://github.com/coreutils/coreutils/blob/master/src/df.c)
+    - depends on: `awk`, `df`, `grep`, `sed`
+
 * [**`tinyurl.sh`**](https://github.com/mcrbt/local-bin/blob/master/tinyurl.sh)
     - command line URL shortener using [https://tinyurl.com](https://tinyurl.com)
     - depends on: `basename`, `bash`, `curl`, `grep`, `perl`
@@ -256,7 +267,7 @@ The collection currently contains the following **32 scripts**:
 
 ## Copyright
 
-Copyright &copy; 2018-2021 Daniel Haase
+Copyright &copy; 2018-2023 Daniel Haase
 
 All scripts of `local-bin` are licensed under the
 **GNU General Public License**, version 3.
@@ -267,7 +278,7 @@ All scripts of `local-bin` are licensed under the
 ```
 
 local-bin - collection of various unrelated scripts
-Copyright (C) 2018-2021  Daniel Haase
+Copyright (C) 2018-2023  Daniel Haase
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
