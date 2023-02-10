@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bash
+#!/usr/bin/env bash
 ##
 ## ddg - search the web with DuckDuckGo from command line
 ## Copyright (C) 2020-2021, 2023 Daniel Haase
@@ -24,21 +24,21 @@ set -o pipefail
 #VERSION="3.0.1"
 BROWSER="firefox --new-tab"
 
-function checkcmd
+function check_command
 {
-	local c="${1%% *}"
+	local command="${1%% *}"
 
-	if [[ $# -eq 0 || -z "${c}" ]] \
-	|| command -v "${c}" &>/dev/null; then
+	if [[ $# -eq 0 || -z "${command}" ]] \
+	|| command -v "${command}" &>/dev/null; then
 		return 0
 	else
-		echo "command \"${c}\" not found"
+		echo "no such command \"${command}\""
 		exit 1
 	fi
 }
 
-checkcmd "${BROWSER}"
-checkcmd "sed"
+check_command "${BROWSER}"
+check_command "sed"
 
 QUERY=$(echo "$@" | sed -e 's/\+/%2B/g' -e 's/ /+/g')
 URL="https://start.duckduckgo.com"
