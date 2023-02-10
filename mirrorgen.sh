@@ -22,7 +22,7 @@ set -o nounset
 set -o pipefail
 
 NAME="mirrorgen"
-VERSION="0.4.1"
+VERSION="0.4.2"
 
 TZ=Europe/Berlin
 DATE=$(TZ="${TZ}" date +%y%m%d)
@@ -113,10 +113,13 @@ elif [[ $# -gt 1 ]]; then
 	exit 3
 fi
 
-check_command "pacman"
-check_command "reflector"
+check_command "cat"
+check_command "date"
 check_command "grep"
 check_command "mv"
+check_command "pacman"
+check_command "reflector"
+check_command "rm"
 
 reflector \
 	--threads 4 \
