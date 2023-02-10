@@ -19,6 +19,8 @@
 
 set -euo pipefail
 
+#VERSION="0.2.1"
+
 ## check if command "$1" is installed
 function checkcmd
 {
@@ -70,9 +72,7 @@ if [ -n "$iface" ]; then
 		echo "interface \"$iface\" is not a wireless interface"
 		exit 7
 	fi
-else
-	iface="$phy"
-fi
+else iface="$phy"; fi
 
 if [ -z "$iface" ]; then
 	echo "no wireless interface available"
@@ -93,7 +93,8 @@ if [ -n "$HWADDR" ] && [ "$HWADDR" != " " ]; then
 	echo "$HWADDR"
 	exit 0
 else
-	echo "failed to get hardware address of wireless access point on interface $iface"
+	echo "failed to get hardware address of wireless access" \
+		"point on interface $iface"
 	exit 3
 fi
 
