@@ -1,7 +1,7 @@
 #!/bin/bash
 ##
 ## isgd - shorten URLs on https://is.gd via command line
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020, 2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,29 +17,43 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-function checkcmd
+set -o errexit
+set -o nounset
+set -o pipefail
+
+function check_command
 {
-	local c="$1"
-	if [ $# eq 0 ] || [ -z "$c" ]; then return 0; fi
-	which "$c" &> /dev/null
-	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 2; fi
-	return 0;
+	local c="${1}"
+
+	if [[ $# -eq 0 || -z "${c}" ]] \
+	|| command -v "${c}" &>/dev/null; then
+		return 0
+	else
+		echo "command \"${c}\" not found"
+		exit 1
+	fi
 }
 
-checkcmd "basename"
-checkcmd "curl"
-checkcmd "grep"
-checkcmd "perl"
-checkcmd "ps"
+check_command "basename"
+check_command "curl"
+check_command "grep"
+check_command "perl"
+check_command "pgrep"
 
-if [ $# -ne 1 ]; then echo "usage:  $(basename $0) <url>"; exit 1; fi
+if [[ $# -ne 1 ]]; then
+	echo "usage:  $(basename "${0}") <url>"
+	exit 2
+fi
 
-if [ -z "$(ps -e | grep tor)" ]; then
-	curl --silent "https://is.gd/create.php?url=$1" | grep "short_url" \
-		| perl -pe 's/.*value="(https:\/\/is\.gd\/.*?)".*/\1/'
+if [[ -z "$(pgrep tor)" ]]; then
+	curl --silent "https://is.gd/create.php?url=${1}" | \
+		grep "short_url" | \
+		perl -pe 's/.*value="(https:\/\/is\.gd\/.*?)".*/\1/'
 else
-	curl --silent --socks5 127.0.0.1:9050 "https://is.gd/create.php?url=$1" \
-		| grep "short_url" | perl -pe 's/.*value="(https:\/\/is\.gd\/.*?)".*/\1/'
+	curl --silent --socks5 127.0.0.1:9050 \
+			"https://is.gd/create.php?url=${1}" | \
+		grep "short_url" | \
+		perl -pe 's/.*value="(https:\/\/is\.gd\/.*?)".*/\1/'
 fi
 
 exit 0

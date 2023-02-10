@@ -157,7 +157,7 @@ The collection currently contains the following **34 scripts**:
 
 * [**`isgd.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/isgd.sh)
     - command line URL shortener, using [https://is.gd](https://is.gd)
-    - depends on: `basename`, `bash`, `curl`, `grep`, `perl`, `ps`
+    - depends on: `basename`, `bash`, `curl`, `grep`, `perl`, `pgrep`
 
 * [**`lock.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/lock.sh)
     - lock the screen
@@ -175,7 +175,7 @@ The collection currently contains the following **34 scripts**:
     - generate fresh pacman mirrorlist with reflector
     - wrapper around [`reflector`](https://xyne.dev/projects/reflector)
     - intended for *Arch Linux* systems or derivatives, with `pacman` package manager
-    - depends on: `cat`, `date`, `grep`, `mv`, `reflector`, `rm`
+    - depends on: `bash`, `cat`, `date`, `grep`, `mv`, `reflector`, `rm`
 
 * [**`monitor.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/monitor.sh)
     - quick information about connected monitors
@@ -239,7 +239,7 @@ The collection currently contains the following **34 scripts**:
 * [**`space.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/space.sh)
     - list available storage space of relevant devices
     - wrapper around [`df`](https://github.com/coreutils/coreutils/blob/master/src/df.c)
-    - depends on: `awk`, `df`, `grep`, `sed`
+    - depends on: `awk`, `bash`, `df`, `grep`, `sed`
 
 * [**`tinyurl.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/tinyurl.sh)
     - command line URL shortener using [https://tinyurl.com](https://tinyurl.com)
