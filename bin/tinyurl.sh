@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##
 ## tinyurl - shorten URLs on https://tinyurl.com via command line
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020, 2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -24,25 +24,36 @@
 ##    2 - operation failed
 ##
 
-function checkcmd
+set -o errexit
+set -o nounset
+set -o pipefail
+
+function check_command
 {
-  local c="$1"
-  if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
-  which "$c" &> /dev/null
-  if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 1; fi
+	local command="${1}"
+
+	if [[ $# -eq 0 || -z "${command}" ]] \
+	|| command -v "${command}" &>/dev/null; then
+		return 0
+	else
+		echo "no such command \"${command}\""
+		exit 1
+	fi
 }
 
-checkcmd "curl"
-checkcmd "basename"
-checkcmd "grep"
-checkcmd "perl"
+check_command "curl"
+check_command "basename"
+check_command "grep"
+check_command "perl"
 
-if [ $# -ne 1 ]; then echo "usage:  $(basename 0) <url>"; exit 1; fi
+if [[ $# -ne 1 ]]; then
+	echo "usage:  $(basename "${0}") <url>"
+	exit 2
+fi
 
-curl --silent "https://tinyurl.com/create.php?url=$1" | \
-  grep "<b>https://tinyurl.com/" | \
-  perl -pe 's/.*<b>(https:\/\/tinyurl\.com\/.*?)<\/b>.*/\1/'
-
-if [ $? -ne 0 ]; then echo "operation failed"; exit 2; fi
+curl --silent "https://tinyurl.com/create.php?url=${1}" | \
+	grep "<b>https://tinyurl.com/" | \
+	perl -pe 's/.*<b>(https:\/\/tinyurl\.com\/.*?)<\/b>.*/\1/' \
+	|| exit 3
 
 exit 0
