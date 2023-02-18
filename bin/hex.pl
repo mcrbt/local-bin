@@ -1,7 +1,7 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ##
 ## hex - convert between ASCII and hexadecimal string representation
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020, 2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -19,34 +19,123 @@
 
 use strict;
 use warnings;
+use utf8;
+use 5.010;
 
-sub usage
-{
-	print "\r\nusage: " . __FILE__ . " [-h | -a] <string>\r\n";
-	print "       " . __FILE__ . " --help\r\n\r\n";
-	print "  -h | --hex | --hexadecimal\r\n";
-	print "      convert ASCII <string> to hexadecimal representation\r\n";
-	print "  -a | --asc | --ascii\r\n";
-	print "      convert hexadecimal <string> to ASCII representation\r\n";
-	print "  --help\r\n";
-	print "      print this help message and exit\r\n\r\n";
-	exit shift;
+use File::Basename;
+
+our $VERSION = v2.1.3;
+
+sub print_version {
+    my $version = version::->parse($VERSION)->normal;
+
+    say "hex $version\ncopyright (c) 2020, 2023 Daniel Haase";
+    return;
 }
 
-sub asc2hex { my $asc = shift; $asc =~ s/(.)/sprintf("%x", ord($1))/eg; print "$asc\n"; }
-sub hex2asc { my $hex = shift; $hex =~ s/(..)/sprintf("%c", hex("0x${1}"))/eg; print "$hex\n"; }
+sub print_usage {
+    my $caller = basename(__FILE__);
+    my $description = <<"EOF";
 
-sub parse_args
-{
-	if(@ARGV == 0) { usage(0); }
-	elsif(@ARGV > 2) { usage(1); }
-	if($ARGV[0] eq "-h" || $ARGV[0] eq "--hex" || $ARGV[0] eq "--hexadecimal")
-	{ if(@ARGV != 2) { usage(1); } else { asc2hex($ARGV[1]); } }
-	elsif($ARGV[0] eq "-a" || $ARGV[0] eq "--asc" || $ARGV[0] eq "--ascii")
-	{ if(@ARGV != 2) { usage(1); } else { hex2asc($ARGV[1]); } }
-	elsif($ARGV[0] eq "--help") { usage(0); }
-	else { if(@ARGV != 1) { usage(1); } else { asc2hex($ARGV[0]); } }
+usage: $caller [-a | -x] [0x]<string>
+       $caller [--version | --help]
+
+   [0x]<string>
+      <string> is converted from ASCII to hexadecimal
+      representation, unless prefixed with "0x", in which case
+      the inverse conversion is performed
+
+   -a
+      convert ASCII <string> to hexdecimal representation;
+      allowing for arguments legitimately starting with "0x"
+      (can occur before or after <string>)
+
+      this is the default, if neither "-a" nor "-x" are given
+      and <string> is not prefixed by "0x"
+
+   -x
+      convert hexadecimal <string> to ASCII representation
+      (can occur before or after <string>)
+
+   --version
+      print version information and exit
+
+   --help
+      print this help message and exit
+
+EOF
+
+    print_version;
+    print $description;
+    return;
 }
 
-parse_args();
+sub is_hex {
+    my $value = shift;
+
+    $value = lc $value;
+    return ($value =~ /^(\d|[a-f])+$/xms);
+}
+
+sub ascii_to_hex {
+    my $value = shift;
+
+    $value =~ s/(.)/sprintf("%x", ord($1))/egxms;
+    return $value;
+}
+
+sub hex_to_ascii {
+    my $value = shift;
+
+    if (not is_hex($value)) {
+        say { \*STDERR } "illegal, non-hexadecimal digit(s) in \"$value\"";
+        exit 2;
+    }
+
+    $value =~ s/(..)/sprintf("%c", hex("0x${1}"))/egxms;
+    return $value;
+}
+
+if (@ARGV == 1) {
+    my $argument = $ARGV[0];
+
+    if ($argument eq '--version') {
+        print_version;
+    } elsif ($argument eq '--help') {
+        print_usage;
+    } elsif ('0x' eq substr $argument, 0, 2) {
+        say hex_to_ascii(substr $argument, 2);
+    } else {
+        say ascii_to_hex($argument);
+    }
+} elsif (@ARGV == 2) {
+    my @flags = grep { /^-a|x$/xms } @ARGV;
+
+    if ($flags[0] eq '-a' or $flags[1] eq '-a') {
+        my @arguments = grep { !/^-a$/xms } @ARGV;
+
+        if (@arguments == 1) {
+            say ascii_to_hex($arguments[0]);
+        } else {
+            say ascii_to_hex('-a');
+        }
+    } elsif ($flags[0] eq '-x') {
+        my @arguments = grep { !/^-x$/xms } @ARGV;
+        my $argument = $arguments[0];
+
+        if (@arguments == 0 or not defined $argument) {
+            print_usage;
+            exit 1;
+        }
+
+        say hex_to_ascii($argument);
+    } else {
+        print_usage;
+        exit 1;
+    }
+} else {
+    print_usage;
+    exit 1;
+}
+
 exit 0;
