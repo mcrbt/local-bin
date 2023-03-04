@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 ##
 ## hex - convert between ASCII and hexadecimal string representation
-## Copyright (C) 2020, 2023 Daniel Haase
+## Copyright (C) 2020-2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -24,12 +24,12 @@ use 5.010;
 
 use File::Basename;
 
-our $VERSION = v2.1.3;
+our $VERSION = v2.1.5;
 
 sub print_version {
     my $version = version::->parse($VERSION)->normal;
 
-    say "hex $version\ncopyright (c) 2020, 2023 Daniel Haase";
+    say "hex $version\ncopyright (c) 2020-2023 Daniel Haase";
     return;
 }
 
@@ -70,22 +70,37 @@ EOF
     return;
 }
 
+sub fail_with_usage {
+    print_usage;
+    exit 1;
+}
+
+sub is_flag {
+    my ($variable, $expected) = @_;
+
+    if (not defined $variable or not defined $expected) {
+        return 0;
+    }
+
+    return $variable eq $expected;
+}
+
 sub is_hex {
-    my $value = shift;
+    my ($value) = @_;
 
     $value = lc $value;
     return ($value =~ /^(\d|[a-f])+$/xms);
 }
 
 sub ascii_to_hex {
-    my $value = shift;
+    my ($value) = @_;
 
     $value =~ s/(.)/sprintf("%x", ord($1))/egxms;
     return $value;
 }
 
 sub hex_to_ascii {
-    my $value = shift;
+    my ($value) = @_;
 
     if (not is_hex($value)) {
         say { \*STDERR } "illegal, non-hexadecimal digit(s) in \"$value\"";
@@ -111,7 +126,7 @@ if (@ARGV == 1) {
 } elsif (@ARGV == 2) {
     my @flags = grep { /^-a|x$/xms } @ARGV;
 
-    if ($flags[0] eq '-a' or $flags[1] eq '-a') {
+    if (is_flag($flags[0], '-a') or is_flag($flags[1], '-a')) {
         my @arguments = grep { !/^-a$/xms } @ARGV;
 
         if (@arguments == 1) {
@@ -119,23 +134,19 @@ if (@ARGV == 1) {
         } else {
             say ascii_to_hex('-a');
         }
-    } elsif ($flags[0] eq '-x') {
+    } elsif (is_flag($flags[0], '-x')) {
         my @arguments = grep { !/^-x$/xms } @ARGV;
-        my $argument = $arguments[0];
 
-        if (@arguments == 0 or not defined $argument) {
-            print_usage;
-            exit 1;
+        if (@arguments == 1) {
+            say hex_to_ascii($arguments[0]);
+        } else {
+            fail_with_usage;
         }
-
-        say hex_to_ascii($argument);
     } else {
-        print_usage;
-        exit 1;
+        fail_with_usage;
     }
 } else {
-    print_usage;
-    exit 1;
+    fail_with_usage;
 }
 
 exit 0;
