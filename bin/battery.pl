@@ -1,7 +1,7 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ##
 ## battery - get capacity of installed batteries
-## Copyright (C) 2020-2021 Daniel Haase
+## Copyright (C) 2020-2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -20,68 +20,300 @@
 use strict;
 use warnings;
 use utf8;
+use 5.010;
 
-use constant VERSION => "0.1.1";
-binmode(STDOUT, ":utf8");
+use File::Basename;
 
-my $bat0 = "/sys/class/power_supply/BAT0/uevent";
-my $bat1 = "/sys/class/power_supply/BAT1/uevent";
-my @bat0_stat;
-my @bat1_stat;
+binmode STDOUT, ':encoding(UTF-8)' or
+    die 'STDOUT does not support UTF-8 encoding';
 
-sub trim
-{
-	my $str = shift;
-	$str =~ s/^\s+|\s+$//g;
-	return $str;
+our $VERSION = v0.2.1;
+
+my $POWER_SUPPLY_PATH = '/sys/class/power_supply';
+my $UEVENT_FIELD_PREFIX = 'POWER_SUPPLY_';
+
+sub trim {
+    my ($string) = @_;
+
+    $string =~ s/^\s+|\s+$//gxms;
+    return $string;
 }
 
-if(-e $bat0)
-{
-	open BAT0, "<$bat0" or do { print "battery \"BAT0\" not found\n"; exit 1; };
+sub check_scalar {
+    my ($value) = @_;
 
-	while(<BAT0>)
-	{
-		my @fields = split "=", $_;
+    if (not defined $value) {
+        die 'undefined argument';
+    }
 
-		if($fields[0] eq "POWER_SUPPLY_NAME") { $bat0_stat[0] = trim($fields[1]); }
-		elsif($fields[0] eq "POWER_SUPPLY_ENERGY_FULL_DESIGN") { $bat0_stat[1] = trim($fields[1]); }
-		elsif($fields[0] eq "POWER_SUPPLY_ENERGY_FULL") { $bat0_stat[2] = trim($fields[1]); }
-		elsif($fields[0] eq "POWER_SUPPLY_ENERGY_NOW") { $bat0_stat[3] = trim($fields[1]); }
-		elsif($fields[0] eq "POWER_SUPPLY_STATUS") { $bat0_stat[4] = lc(trim($fields[1])); }
-	}
+    if (ref $value ne q{}) {
+        die 'non-reference scalar expected';
+    }
 
-	close BAT0;
+    if (not length trim($value)) {
+        die 'non-empty scalar expected';
+    }
 
-	my $bat0_val = ($bat0_stat[3] / $bat0_stat[1]) * 100;
-	printf "%s:    %s%.2f%% [%s]\n", $bat0_stat[0], ($bat0_val < 10 ? " " : ""), $bat0_val, $bat0_stat[4];
+    return;
 }
 
-if(-e $bat1)
-{
-	open BAT1, "<$bat1" or do { print "battery \"BAT1\" not found\n"; exit 1; };
+sub raise {
+    my ($message) = @_;
 
-	while(<BAT1>)
-	{
-		my @fields = split "=", $_;
-
-		if($fields[0] eq "POWER_SUPPLY_NAME") { $bat1_stat[0] = trim($fields[1]); }
-        elsif($fields[0] eq "POWER_SUPPLY_ENERGY_FULL_DESIGN") { $bat1_stat[1] = trim($fields[1]); }
-        elsif($fields[0] eq "POWER_SUPPLY_ENERGY_FULL") { $bat1_stat[2] = trim($fields[1]); }
-        elsif($fields[0] eq "POWER_SUPPLY_ENERGY_NOW") { $bat1_stat[3] = trim($fields[1]); }
-        elsif($fields[0] eq "POWER_SUPPLY_STATUS") { $bat1_stat[4] = lc(trim($fields[1])); }
-	}
-
-	close BAT1;
-
-	my $bat1_val = ($bat1_stat[3] / $bat1_stat[1]) * 100;
-	printf "%s:    %s%.2f%% [%s]\n", $bat1_stat[0], ($bat1_val < 10 ? " " : ""), $bat1_val, $bat1_stat[4];
+    check_scalar($message);
+    say { \*STDERR } $message;
+    return;
 }
 
-if(-e $bat0 && -e $bat1)
-{
-	my $bats_val = (($bat0_stat[3] + $bat1_stat[3]) / ($bat0_stat[1] + $bat1_stat[1])) * 100;
-	printf "overall: %.2f%%\n", $bats_val;
+sub panic {
+    my ($argument) = @_;
+
+    raise($argument);
+    exit 2;
 }
 
+sub print_version {
+    my $version = version::->parse($VERSION)->normal;
+
+    say "battery $version\ncopyright (c) 2020-2023 Daniel Haase";
+    return;
+}
+
+sub print_usage {
+    my $caller = basename(__FILE__);
+    my $description = <<"EOF";
+
+usage: $caller [--version | --help]
+
+   --version
+      print version information and exit
+
+   --help
+      print this help message and exit
+
+EOF
+
+    print_version;
+    print $description;
+    return;
+}
+
+sub parse_arguments {
+    if (@ARGV == 1) {
+        my $argument = $ARGV[0];
+
+        if ($argument eq '--version') {
+            print_version;
+            exit 0;
+        } elsif ($argument eq '--help') {
+            print_usage;
+            exit 0;
+        } else {
+            raise("unknown command line argument \"$argument\"\n");
+            print_usage;
+            exit 1;
+        }
+    } elsif (@ARGV > 1) {
+        raise("too many command line arguments\n");
+        print_usage;
+        exit 1;
+    }
+
+    return;
+}
+
+sub get_power_supply_data {
+    my ($supply) = @_;
+
+    check_scalar($supply);
+
+    my $filename = "$supply/uevent";
+
+    if (not -e $filename) {
+        panic("no such file \"$filename\"");
+    }
+
+    my %data;
+    my $prefix_regex = qr/$UEVENT_FIELD_PREFIX/xms;
+
+    open my $battery, '<', $filename or
+        panic("failed to open file \"$filename\"");
+
+    while (<$battery>) {
+        chomp;
+
+        my @line = split /=/xms;
+
+        if (not /^${prefix_regex}[A-Z_]+=.+$/xms) {
+            next;
+        }
+
+        my $key = trim($line[0]);
+
+        $key =~ s/${prefix_regex}//xms;
+        $key = lc $key;
+        $data{$key} = trim($line[1]);
+    }
+
+    close $battery or
+        panic("failed to close file \"$filename\"");
+    return %data;
+}
+
+sub load_battery_power_supplies {
+    my @files = glob "$POWER_SUPPLY_PATH/*";
+    my @supplies;
+
+    foreach my $file (@files) {
+        my %supply = get_power_supply_data($file);
+        my $type = lc $supply{'type'};
+
+        if ($type eq 'battery') {
+            push @supplies, \%supply;
+        }
+    }
+
+    return @supplies;
+}
+
+sub aggregate_totals {
+    my ($supplies) = @_;
+
+    if (ref $supplies ne 'ARRAY') {
+        die 'array reference expected';
+    }
+
+    my %totals = ('name' => 'total');
+
+    foreach (@{$supplies}) {
+        $totals{'energy_now'} += $_->{'energy_now'};
+        $totals{'energy_full'} += $_->{'energy_full'};
+        $totals{'energy_full_design'} += $_->{'energy_full_design'};
+    }
+
+    return %totals;
+}
+
+sub aggregate_status {
+    my ($totals, $supplies) = @_;
+
+    if (ref $totals ne 'HASH') {
+        die 'hash reference expected';
+    }
+
+    if (ref $supplies ne 'ARRAY') {
+        die 'array reference expected';
+    }
+
+    my %status_map = (
+        'full' => 0,
+        'charging' => 0,
+        'discharging' => 0,
+        'not charging' => 0,
+    );
+
+    foreach (@{$supplies}) {
+        my $status = lc $_->{'status'};
+
+        if ($status eq 'full') {
+            $status_map{'full'} += 1;
+        } elsif ($status eq 'charging') {
+            $status_map{'charging'} += 1;
+        } elsif ($status eq 'discharging') {
+            $status_map{'discharging'} += 1;
+        } elsif ($status eq 'not charging') {
+            $status_map{'not charging'} += 1;
+        }
+    }
+
+    my $supplier_count = scalar @{$supplies};
+
+    if ($status_map{'full'} == $supplier_count) {
+        $totals->{'status'} = 'full';
+    } elsif ($status_map{'charging'} > $status_map{'discharging'}) {
+        $totals->{'status'} = 'charging';
+    } elsif ($status_map{'discharging'} > $status_map{'charging'}) {
+        $totals->{'status'} = 'discharging';
+    } elsif (
+        $status_map{'not charging'} > 0
+        and
+        $status_map{'discharging'} < 1
+        and
+        $status_map{'charging'} < 1
+    ) {
+        $totals->{'status'} = 'not charging';
+    } else {
+        $totals->{'status'} = 'unknown';
+    }
+
+    return;
+}
+
+sub percentage {
+    my ($share, $total) = @_;
+
+    check_scalar($share);
+    check_scalar($total);
+
+    return (($share / $total) * 100);
+}
+
+sub calculate_capacity {
+    my ($data) = @_;
+
+    if (ref $data ne 'HASH') {
+        die 'hash reference expected';
+    }
+
+    return percentage($data->{'energy_now'}, $data->{'energy_full'});
+}
+
+sub calculate_design_capacity {
+    my ($data) = @_;
+
+    if (ref $data ne 'HASH') {
+        die 'hash reference expected';
+    }
+
+    return percentage($data->{'energy_now'}, $data->{'energy_full_design'});
+}
+
+sub format_output {
+    my ($data) = @_;
+
+    if (ref $data ne 'HASH') {
+        die 'hash reference expected';
+    }
+
+    my $capacity = calculate_capacity($data);
+    my $design_capacity = calculate_design_capacity($data);
+
+    return sprintf '%8s:  %6.2f%%  (%6.2f%%)  [%s]', $data->{'name'},
+        $capacity, $design_capacity, lc $data->{'status'};
+}
+
+sub aggregate_output {
+    my ($supplies) = @_;
+    my @output;
+
+    if (ref $supplies ne 'ARRAY') {
+        die 'array reference expected';
+    }
+
+    foreach (@{$supplies}) {
+        push @output, format_output($_);
+    }
+
+    return join qq{\n}, @output;
+}
+
+parse_arguments;
+
+my @supplies = load_battery_power_supplies;
+my %totals = aggregate_totals(\@supplies);
+
+aggregate_status(\%totals, \@supplies);
+push @supplies, \%totals;
+
+say aggregate_output(\@supplies);
 exit 0;
