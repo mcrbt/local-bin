@@ -1,5 +1,5 @@
 ##
-## local-bin - collection of various command line scripts scripts
+## local-bin - collection of various command line scripts
 ## Copyright (C) 2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 ##
 
 *.7z
-*.href
+*.pl.tdy
+*.pl.ERR
 *.tar*
 *.t?z
+/reference
