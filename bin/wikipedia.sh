@@ -17,6 +17,11 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noclobber
+
 TITLE="wikipedia"
 VERSION="0.3.1"
 
@@ -137,7 +142,7 @@ if [[ -n "${query}" ]]; then
 fi
 
 if ! eval "${BROWSER_COMMAND} ${URL} &>/dev/null &"; then
-	echo "failed to open browser \"${BROWSER_COMMAND%% }\""
+	echo "failed to open browser \"${BROWSER_COMMAND%% *}\""
 	exit 2
 fi
 
