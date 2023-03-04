@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ##
 ## dictcc - translate a pattern on <https://dict.cc>
-## Copyright (C) 2020, 2023 Daniel Haase
+## Copyright (C) 2020-2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -20,30 +20,27 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -o noclobber
 
-BROWSER="firefox --new-tab"
+export VERSION="0.2.0"
+BROWSER_COMMAND="firefox --new-tab"
 
-function check_command
-{
-	local command="${1%% *}"
+url="https://dict.cc"
+query="${*}"
+browser="${BROWSER_COMMAND%% *}"
 
-	if [[ $# -eq 0 || -z "${command}" ]] \
-	|| command -v "${command}" &>/dev/null; then
-		return 0
-	else
-		echo "no such command \"${command}\""
-		exit 1
-	fi
-}
+if ! command -v "${browser}" &>/dev/null; then
+	echo "no such command \"${browser}\""
+	exit 1
+fi
 
-check_command "sed"
-check_command "${BROWSER}"
+if [[ $# -gt 0 && -n "${query}" ]]; then
+	url="${url}/?s=${query// /+}"
+fi
 
-if [[ $# -eq 0 || -z "${1}" ]]; then
-	eval "${BROWSER} https://dict.cc/ &>/dev/null &"
-else
-	QUERY="$*"
-	eval "${BROWSER} https://dict.cc/?s=${QUERY// /+} &>/dev/null &"
+if ! eval "${BROWSER_COMMAND} ${url} &>/dev/null &"; then
+	echo "failed to open browser \"${browser}\""
+	exit 2
 fi
 
 exit 0
