@@ -48,13 +48,6 @@ ln -sv $(pwd)/local-bin/battery.pl /usr/local/bin/battery
 
 The collection currently contains the following **34 scripts**:
 
-* [**`adapt.pl`**](https://github.com/mcrbt/local-bin/blob/master/bin/adapt.pl)
-  * adapt names of foreign files for use with Linux filesystems
-  * whitespaces and lots of special characters are replaced with underscore
-    ("\_"), German umlauts and other graphemes are converted to their ASCII
-    representation (e.g. "ä"->"ae", "â"->"a", ...)
-  * depends on: `perl`
-
 * [**`aphwaddr.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/aphwaddr.sh)
   * print hardware address (i.e. *MAC address*) of the wireless
       access point currently connected to
@@ -137,6 +130,13 @@ The collection currently contains the following **34 scripts**:
   * extract information about the default network interface and its
     assigned IP addresses
   * depends on: `awk`, `bash`, `head`, `ip`, `wc`
+
+* [**`incorporate.pl`**](https://github.com/mcrbt/local-bin/blob/master/bin/incorporate.pl)
+  * "incorporate" foreign files into a Linux file system by adapting their names
+  * whitespaces and lots of special characters are replaced with underscore
+    ("\_"), German umlauts and other graphemes are converted to their ASCII
+    representation (e.g. "ä"->"ae", "â"->"a", ...)
+  * depends on: `perl`
 
 * [**`invoke.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/invoke.sh)
   * start any program as background task from command line, with
@@ -257,9 +257,9 @@ The collection currently contains the following **34 scripts**:
   * depends on: `basename`, `bash`, `grep`, `xinput`
 
 * [**`wikipedia.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/wikipedia.sh)
-  * open a specific *Wikipedia* article from command line
-  * support for German and English translations (easily extensible)
-  * depends on: `basename`, `bash`, `firefox`, `sed`, `tr`
+  * open a specific *Wikipedia* article from the command line
+  * support for any language Wikipedia is available in
+  * depends on: `bash`, `firefox`, `tr`
 
 ## Copyright
 
@@ -271,7 +271,7 @@ All scripts of `local-bin` are licensed under the
 ## License disclaimer
 
 ```text
-local-bin - collection of various unrelated scripts
+local-bin - collection of various command line scripts
 Copyright (C) 2018-2023  Daniel Haase
 
 This program is free software: you can redistribute it and/or modify

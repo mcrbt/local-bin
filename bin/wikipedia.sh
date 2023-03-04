@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##
 ## wikipedia - open specific Wikipedia article from command line
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020-2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,45 +17,128 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-LANG="en"
-QUERY=""
+TITLE="wikipedia"
+VERSION="0.3.1"
 
-function checkcmd
-{
-	local c="$1"
-	if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
-	which "$c" &> /dev/null
-	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 1; fi
-	return 0
+BROWSER_COMMAND="firefox --new-tab"
+DEFAULT_LANGUAGE="en"
+
+function check_command {
+	local -r command="${1%% *}"
+
+	if ! command -v "${command}" &>/dev/null; then
+		echo "no such command \"${command}\""
+		exit 1
+	fi
 }
 
-function prepare()
-{
-	NAME=$(for i in $@; do CONV=$(echo -n "${i:0:1}" \
-		| tr "[:lower:]" "[:upper:]"); echo -n "${CONV}${i:1}"; done)
-	NAME=$(echo "$NAME" | sed 's/\([A-Z]\)/_\1/g' | sed 's/^_//')
-	echo "$NAME"
+function print_version {
+	cat <<-EOF
+	${TITLE} ${VERSION}
+	copyright (c) 2020-2023 Daniel Haase
+	EOF
 }
 
-checkcmd "basename"
-checkcmd "firefox"
-checkcmd "sed"
-checkcmd "tr"
+function print_usage {
+	print_version
+	cat <<-EOF
 
-if [ $# -eq 0 ]; then echo "usage:  $(basename $0) <en|de> <query>"; exit 0
-elif [ $# -eq 1 ]; then
-	if [ "$1" == "en" ] || [ "$1" == "de" ]
-	then echo "usage:  $(basename $0) <en|de> <query>"; exit 2; fi
-	QUERY=$(prepare $1)
-else
-	if [ "$1" == "en" ] || [ "$1" == "de" ]; then LANG=$1; shift; fi
-	QUERY=$(prepare $@)
+	usage:  ${TITLE} [-l <language>] <phrase>...
+	        ${TITLE} [-V|-h]
+
+	   <phrase>...
+	      arbitrarily many phrases to search for on Wikipedia
+
+	   -l <language> | --language <language>
+	      two- or three-digit language code to search Wikipedia in
+
+	   -V | --version
+	      print version information and exit
+
+	   -h | --help
+	      print this usage description and exit
+
+	EOF
+}
+
+function prepare_query() {
+	local -a phrases=("$@")
+	local query="${phrases[*]}"
+
+	query="$(echo -n "${query:0:1}" | tr "[:lower:]" "[:upper:]")${query:1}"
+	echo "${query[*]// /_}"
+}
+
+check_command "${BROWSER_COMMAND}"
+check_command "tr"
+
+language="${DEFAULT_LANGUAGE}"
+phrases=()
+
+if [[ $# -eq 0 ]]; then
+	print_usage
+	exit 1
+elif [[ $# -eq 1 ]]; then
+	case "${1}" in
+		-V|--version)
+			print_version
+			exit 0
+			;;
+		-h|--help)
+			print_usage
+			exit 0
+			;;
+		-*)
+			print_usage
+			exit 2
+			;;
+		*)
+			phrases=("${1}")
+			;;
+	esac
+elif [[ $# -eq 2 ]]; then
+	case "${1}" in
+		-*)
+			print_usage
+			exit 2
+			;;
+		*)
+			phrases=("$@")
+			;;
+	esac
+elif [[ $# -gt 2 ]]; then
+	case "${1}" in
+		-l|--language)
+			if [[ "${#2}" -lt 2 || "${#2}" -gt 3 ]]; then
+				print_usage
+				exit 2
+			fi
+
+			language="${2}"
+			shift
+			shift
+			;;
+		-*)
+			print_usage
+			exit 2
+			;;
+		*)
+			;;
+	esac
+
+	phrases=("$@")
 fi
 
-if [ -z "$QUERY" ]; then URL="https://www.wikipedia.org/"
-else URL="https://$LANG.wikipedia.org/wiki/$QUERY"; fi
+URL="https://www.wikipedia.org/"
+query=$(prepare_query "${phrases[@]}")
 
-firefox --new-tab $URL &> /dev/null &
-if [ $? -ne 0 ]; then echo "failed to open \"firefox\""; exit 2; fi
+if [[ -n "${query}" ]]; then
+	URL="https://${language}.wikipedia.org/wiki/${query}"
+fi
+
+if ! eval "${BROWSER_COMMAND} ${URL} &>/dev/null &"; then
+	echo "failed to open browser \"${BROWSER_COMMAND%% }\""
+	exit 2
+fi
 
 exit 0
