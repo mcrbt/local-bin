@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bash
+#!/usr/bin/env bash
 ##
 ## mirrorgen - generate fresh pacman mirrorlist with reflector
 ## Copyright (C) 2022-2023 Daniel Haase
@@ -22,38 +22,35 @@ set -o nounset
 set -o pipefail
 
 NAME="mirrorgen"
-VERSION="0.4.2"
+VERSION="0.4.4"
 
-TZ=Europe/Berlin
-DATE=$(TZ="${TZ}" date +%y%m%d)
+DATE=$(date +%y%m%d)
 
-PACPATH="/etc/pacman.d"
-MIRRORFILE="${PACPATH}/${NAME}${DATE}.list"
-MIRRORLIST="${PACPATH}/mirrorlist"
-BACKUPFILE="${PACPATH}/mirrorlist.bak"
+PACMAN_PATH="/etc/pacman.d"
+MIRROR_FILE="${PACMAN_PATH}/${NAME}${DATE}.list"
+MIRROR_LIST="${PACMAN_PATH}/mirrorlist"
+BACKUP_FILE="${PACMAN_PATH}/mirrorlist.bak"
 
+COUNTRIES="Germany,Denmark,Netherlands"
 MAX_SERVERS=15
 
-function version
-{
+function print_version {
 	cat <<-EOF
 	${NAME} ${VERSION}
 	copyright (c) 2022-2023 Daniel Haase
 	EOF
 }
 
-function usage
-{
-	version
-
+function print_usage {
+	print_version
 	cat <<-EOF
 
 	usage:  ${NAME} [--update | --version | --help]
 
 	   --update
 	      directly update the actual mirrorlist file
-	      "${MIRRORLIST}" (a potential backup file
-	      "${BACKUPFILE}" will be overridden)
+	      "${MIRROR_LIST}" (a potential backup file
+	      "${BACKUP_FILE}" will be overridden)
 
 	   --version
 	      print version and copyright information and exit
@@ -64,24 +61,16 @@ function usage
 	EOF
 }
 
-function check_command
-{
-	local command="${1}"
-
-	if [[ $# -eq 0 ]] \
-	|| [[ -z "${command}" ]] \
-	|| command -v "${command}" &>/dev/null; then
-		return 0
-	else
-		echo "no such command \"${command}\""
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo "no such command \"${1}\""
 		exit 1
 	fi
 }
 
-function rename
-{
-	local old_name="${1}"
-	local new_name="${2}"
+function rename {
+	local -r old_name="${1}"
+	local -r new_name="${2}"
 
 	if [[ -f "${old_name}" ]]; then
 		mv --interactive "${old_name}" "${new_name}"
@@ -96,20 +85,20 @@ if [[ $# -eq 1 ]]; then
 			UPDATE=1
 			;;
 		--version)
-			version
+			print_version
 			exit 0
 			;;
 		--help)
-			usage
+			print_usage
 			exit 0
 			;;
 		*)
-			usage
+			print_usage
 			exit 3
 			;;
 	esac
 elif [[ $# -gt 1 ]]; then
-	usage
+	print_usage
 	exit 3
 fi
 
@@ -125,32 +114,31 @@ reflector \
 	--threads 4 \
 	--connection-timeout 7 \
 	--protocol "https" \
-	--country "Germany,Denmark,Netherlands" \
+	--country "${COUNTRIES}" \
 	--age 1 \
 	--completion-percent 100 \
 	--fastest "${MAX_SERVERS}" \
 	--sort "score" \
-	--save "${MIRRORFILE}" \
+	--save "${MIRROR_FILE}" \
 	&>/dev/null
 
-if [[ -f "${MIRRORFILE}" ]] \
-&& [[ -s "${MIRRORFILE}" ]]; then
-	COUNT=$(grep --count 'Server = ' "${MIRRORFILE}")
+if [[ -f "${MIRROR_FILE}" && -s "${MIRROR_FILE}" ]]; then
+	COUNT=$(grep --count 'Server = ' "${MIRROR_FILE}")
 
 	if [[ ${UPDATE} -ge 1 ]]; then
-		rename "${MIRRORLIST}" "${BACKUPFILE}"
-		rename "${MIRRORFILE}" "${MIRRORLIST}"
+		rename "${MIRROR_LIST}" "${BACKUP_FILE}"
+		rename "${MIRROR_FILE}" "${MIRROR_LIST}"
 
 		echo "successfully updated mirrorlist with ${COUNT} servers"
 	else
 		cat <<-EOF
 		successfully generated mirrorlist with ${COUNT} servers:
-		   "${MIRRORFILE}"
+		   "${MIRROR_FILE}"
 		EOF
 	fi
 else
-	if [[ -f "${MIRRORFILE}" ]]; then
-		rm -f "${MIRRORFILE}"
+	if [[ -f "${MIRROR_FILE}" ]]; then
+		rm --force "${MIRROR_FILE}"
 	fi
 
 	echo "failed to generate mirrorlist"
