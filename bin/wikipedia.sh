@@ -82,7 +82,7 @@ phrases=()
 
 if [[ $# -eq 0 ]]; then
 	print_usage
-	exit 1
+	exit 2
 elif [[ $# -eq 1 ]]; then
 	case "${1}" in
 		-V|--version)
@@ -143,7 +143,7 @@ fi
 
 if ! eval "${BROWSER_COMMAND} ${URL} &>/dev/null &"; then
 	echo "failed to open browser \"${BROWSER_COMMAND%% *}\""
-	exit 2
+	exit 3
 fi
 
 exit 0
