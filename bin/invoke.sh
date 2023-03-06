@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bash
+#!/usr/bin/env bash
 ##
 ## invoke - start background process and suppress any output
 ## Copyright (C) 2020-2023 Daniel Haase
@@ -20,8 +20,9 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -o noclobber
 
-#VERSION="4.1.1"
+#VERSION="4.1.2"
 
 while [[ $# -gt 0 && "${1}" == "${0}" ]]; do
 	shift
@@ -36,7 +37,7 @@ if ! command -v "${1}" &>/dev/null; then
 	exit 1
 fi
 
-nohup "$@" </dev/null &>/dev/null &
+nohup "${@}" </dev/null &>/dev/null &
 disown &>/dev/null
 
 exit 0
