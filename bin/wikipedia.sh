@@ -23,24 +23,22 @@ set -o pipefail
 set -o noclobber
 
 TITLE="wikipedia"
-VERSION="0.3.1"
+VERSION="0.3.3"
 
-BROWSER_COMMAND="firefox --new-tab"
+BROWSER_COMMAND="${BROWSER_COMMAND:-"firefox --new-tab"}"
 DEFAULT_LANGUAGE="en"
 
 function check_command {
-	local -r command="${1%% *}"
-
-	if ! command -v "${command}" &>/dev/null; then
-		echo "no such command \"${command}\""
+	if ! command -v "${1}" &>/dev/null; then
+		echo "no such command \"${1}\""
 		exit 1
 	fi
 }
 
 function print_version {
 	cat <<-EOF
-	${TITLE} ${VERSION}
-	copyright (c) 2020-2023 Daniel Haase
+		${TITLE} ${VERSION}
+		copyright (c) 2020-2023 Daniel Haase
 	EOF
 }
 
@@ -48,20 +46,20 @@ function print_usage {
 	print_version
 	cat <<-EOF
 
-	usage:  ${TITLE} [-l <language>] <phrase>...
-	        ${TITLE} [-V|-h]
+		usage:  ${TITLE} [-l <language>] <phrase>...
+		        ${TITLE} [-V|-h]
 
-	   <phrase>...
-	      arbitrarily many phrases to search for on Wikipedia
+		   <phrase>...
+		      arbitrarily many phrases to search for on Wikipedia
 
-	   -l <language> | --language <language>
-	      two- or three-digit language code to search Wikipedia in
+		   -l <language> | --language <language>
+		      two- or three-digit language code to search Wikipedia in
 
-	   -V | --version
-	      print version information and exit
+		   -V | --version
+		      print version information and exit
 
-	   -h | --help
-	      print this usage description and exit
+		   -h | --help
+			   print this usage description and exit
 
 	EOF
 }
@@ -74,22 +72,26 @@ function prepare_query() {
 	echo "${query[*]// /_}"
 }
 
-check_command "${BROWSER_COMMAND}"
-check_command "tr"
-
+command_name="${BROWSER_COMMAND%% *}"
 language="${DEFAULT_LANGUAGE}"
 phrases=()
+
+check_command "${command_name}"
+check_command "tr"
+
+expanded_command="$(command -v "${command_name}") "
+expanded_command+="${BROWSER_COMMAND/#${command_name} /}"
 
 if [[ $# -eq 0 ]]; then
 	print_usage
 	exit 2
 elif [[ $# -eq 1 ]]; then
 	case "${1}" in
-		-V|--version)
+		-V | --version)
 			print_version
 			exit 0
 			;;
-		-h|--help)
+		-h | --help)
 			print_usage
 			exit 0
 			;;
@@ -113,36 +115,34 @@ elif [[ $# -eq 2 ]]; then
 	esac
 elif [[ $# -gt 2 ]]; then
 	case "${1}" in
-		-l|--language)
+		-l | --language)
 			if [[ "${#2}" -lt 2 || "${#2}" -gt 3 ]]; then
 				print_usage
 				exit 2
 			fi
 
 			language="${2}"
-			shift
-			shift
+			shift 2
 			;;
 		-*)
 			print_usage
 			exit 2
 			;;
-		*)
-			;;
+		*) ;;
 	esac
 
 	phrases=("$@")
 fi
 
-URL="https://www.wikipedia.org/"
-query=$(prepare_query "${phrases[@]}")
+url="https://www.wikipedia.org/"
+query="$(prepare_query "${phrases[@]}")"
 
 if [[ -n "${query}" ]]; then
-	URL="https://${language}.wikipedia.org/wiki/${query}"
+	url="https://${language}.wikipedia.org/wiki/${query}"
 fi
 
-if ! eval "${BROWSER_COMMAND} ${URL} &>/dev/null &"; then
-	echo "failed to open browser \"${BROWSER_COMMAND%% *}\""
+if ! eval "${expanded_command} ${url} &>/dev/null &"; then
+	echo "failed to open browser \"${command_name}\""
 	exit 3
 fi
 

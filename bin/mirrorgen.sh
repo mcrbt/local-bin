@@ -22,11 +22,11 @@ set -o nounset
 set -o pipefail
 
 NAME="mirrorgen"
-VERSION="0.4.4"
+VERSION="0.4.6"
 
 DATE=$(date +%y%m%d)
 
-PACMAN_PATH="/etc/pacman.d"
+PACMAN_PATH="${PACMAN_PATH:-"/etc/pacman.d"}"
 MIRROR_FILE="${PACMAN_PATH}/${NAME}${DATE}.list"
 MIRROR_LIST="${PACMAN_PATH}/mirrorlist"
 BACKUP_FILE="${PACMAN_PATH}/mirrorlist.bak"
@@ -36,8 +36,8 @@ MAX_SERVERS=15
 
 function print_version {
 	cat <<-EOF
-	${NAME} ${VERSION}
-	copyright (c) 2022-2023 Daniel Haase
+		${NAME} ${VERSION}
+		copyright (c) 2022-2023 Daniel Haase
 	EOF
 }
 
@@ -45,18 +45,18 @@ function print_usage {
 	print_version
 	cat <<-EOF
 
-	usage:  ${NAME} [--update | --version | --help]
+		usage:  ${NAME} [--update | --version | --help]
 
-	   --update
-	      directly update the actual mirrorlist file
-	      "${MIRROR_LIST}" (a potential backup file
-	      "${BACKUP_FILE}" will be overridden)
+		   --update
+		      directly update the actual mirrorlist file
+		      "${MIRROR_LIST}"
+		      (a potential backup file will be overridden)
 
-	   --version
-	      print version and copyright information and exit
+		   --version
+		      print version and copyright information and exit
 
-	   --help
-	      print this usage description and exit
+		   --help
+		      print this usage description and exit
 
 	EOF
 }
@@ -77,12 +77,12 @@ function rename {
 	fi
 }
 
-UPDATE=0
+update=0
 
 if [[ $# -eq 1 ]]; then
 	case "${1}" in
 		--update)
-			UPDATE=1
+			update=1
 			;;
 		--version)
 			print_version
@@ -123,17 +123,17 @@ reflector \
 	&>/dev/null
 
 if [[ -f "${MIRROR_FILE}" && -s "${MIRROR_FILE}" ]]; then
-	COUNT=$(grep --count 'Server = ' "${MIRROR_FILE}")
+	count=$(grep --count 'Server = ' "${MIRROR_FILE}")
 
-	if [[ ${UPDATE} -ge 1 ]]; then
+	if [[ ${update} -ge 1 ]]; then
 		rename "${MIRROR_LIST}" "${BACKUP_FILE}"
 		rename "${MIRROR_FILE}" "${MIRROR_LIST}"
 
-		echo "successfully updated mirrorlist with ${COUNT} servers"
+		echo "successfully updated mirrorlist with ${count} servers"
 	else
 		cat <<-EOF
-		successfully generated mirrorlist with ${COUNT} servers:
-		   "${MIRROR_FILE}"
+			successfully generated mirrorlist with ${count} servers:
+			   "${MIRROR_FILE}"
 		EOF
 	fi
 else

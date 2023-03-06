@@ -22,24 +22,28 @@ set -o nounset
 set -o pipefail
 set -o noclobber
 
-export VERSION="0.2.0"
-BROWSER_COMMAND="firefox --new-tab"
+#VERSION="0.2.0"
+BROWSER_COMMAND="${BROWSER_COMMAND:-"firefox --new-tab"}"
 
+declare -r expanded_command
+command_name="${BROWSER_COMMAND%% *}"
 url="https://dict.cc"
 query="${*}"
-browser="${BROWSER_COMMAND%% *}"
 
-if ! command -v "${browser}" &>/dev/null; then
-	echo "no such command \"${browser}\""
+if ! command -v "${command_name}" &>/dev/null; then
+	echo "no such command \"${command_name}\""
 	exit 1
 fi
+
+expanded_command="$(command -v "${command_name}") " \
+	"${BROWSER_COMMAND/#${command_name} /}"
 
 if [[ $# -gt 0 && -n "${query}" ]]; then
 	url="${url}/?s=${query// /+}"
 fi
 
-if ! eval "${BROWSER_COMMAND} ${url} &>/dev/null &"; then
-	echo "failed to open browser \"${browser}\""
+if ! eval "${expanded_command} ${url} &>/dev/null &"; then
+	echo "failed to open browser \"${command_name}\""
 	exit 2
 fi
 

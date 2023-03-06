@@ -29,7 +29,8 @@ binmode STDOUT, ':encoding(UTF-8)' or
 
 our $VERSION = v0.2.1;
 
-my $POWER_SUPPLY_PATH = '/sys/class/power_supply';
+my $POWER_SUPPLY_PATH =
+    $ENV{'POWER_SUPPLY_PATH'} || '/sys/class/power_supply';
 my $UEVENT_FIELD_PREFIX = 'POWER_SUPPLY_';
 
 sub trim {
@@ -144,7 +145,7 @@ sub get_power_supply_data {
 
         my @line = split /=/xms;
 
-        if (not /^${prefix_regex}[A-Z_]+=.+$/xms) {
+        if (not /^${prefix_regex}[[:upper:]]|_+=.+$/xms) {
             next;
         }
 
@@ -215,15 +216,7 @@ sub aggregate_status {
     foreach (@{$supplies}) {
         my $status = lc $_->{'status'};
 
-        if ($status eq 'full') {
-            $status_map{'full'} += 1;
-        } elsif ($status eq 'charging') {
-            $status_map{'charging'} += 1;
-        } elsif ($status eq 'discharging') {
-            $status_map{'discharging'} += 1;
-        } elsif ($status eq 'not charging') {
-            $status_map{'not charging'} += 1;
-        }
+        $status_map{$status} += 1;
     }
 
     my $supplier_count = scalar @{$supplies};
