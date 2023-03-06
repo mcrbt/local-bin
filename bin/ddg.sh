@@ -20,32 +20,37 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -o noclobber
 
-#VERSION="3.0.1"
-BROWSER="firefox --new-tab"
+#VERSION="3.0.2"
+BROWSER_COMMAND="${BROWSER_COMMAND:-"firefox --new-tab"}"
 
-function check_command
-{
-	local command="${1%% *}"
-
-	if [[ $# -eq 0 || -z "${command}" ]] \
-	|| command -v "${command}" &>/dev/null; then
-		return 0
-	else
-		echo "no such command \"${command}\""
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo "no such command \"${1}\""
 		exit 1
 	fi
 }
 
-check_command "${BROWSER}"
+command_name="${BROWSER_COMMAND%% *}"
+declare -r expanded_command
+
+check_command "${command_name}"
 check_command "sed"
 
-QUERY=$(echo "$@" | sed -e 's/\+/%2B/g' -e 's/ /+/g')
-URL="https://start.duckduckgo.com"
+expanded_command="$(command -v "${command_name}")" \
+	"${BROWSER_COMMAND/#${command_name} /}"
 
-if [[ -n "${QUERY}" ]]; then
-	URL="${URL}/?q=${QUERY}"
+query=$(echo "${@}" | sed -e 's/\+/%2B/g' -e 's/ /+/g')
+url="https://start.duckduckgo.com"
+
+if [[ -n "${query}" ]]; then
+	url="${url}/?q=${query}"
 fi
 
-eval "${BROWSER} ${URL} &>/dev/null &"
+if ! eval "${expanded_command} ${url} &>/dev/null &"; then
+	echo "failed to open browser \"${command_name}\""
+	exit 2
+fi
+
 exit 0
