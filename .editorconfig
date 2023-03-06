@@ -24,7 +24,7 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 charset = utf-8
 
-[*.sh]
+[*.sh,*.bash,*.bats]
 indent_style = tab
 indent_size = 1
 tab_width = 4
