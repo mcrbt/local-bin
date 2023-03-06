@@ -20,16 +20,13 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -o noclobber
 
-function check_command
-{
-	local c="${1%% *}"
+#VERSION="0.2.1"
 
-	if [[ $# -eq 0 || -z "${c}" ]] \
-	|| command -v "${c}" &>/dev/null; then
-		return 0
-	else
-		echo "command \"${c}\" not found"
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo "no such command \"${1}\""
 		exit 1
 	fi
 }
@@ -39,14 +36,14 @@ check_command "df"
 check_command "grep"
 check_command "sed"
 
-df -h | \
-	grep '/dev/\(sd\|mmcblk\)..' | \
-	awk '{print $1" "$0}' | \
+df -h |
+	grep '/dev/\(sd\|mmcblk\)..' |
+	awk '{print $1" "$0}' |
 	sed -e 's/\/dev\/sda6/\[root\]/' \
 		-e 's/\/dev\/sda8/\[home\]/' \
 		-e 's/\/dev\/sda2/\[boot\]/' \
 		-e 's/\/dev\/mmcblk[0-9]p[0-9]/\[sd\]/' \
-		-e 's/\/dev\/sdb[0-9]/\[usb\]/' | \
+		-e 's/\/dev\/sdb[0-9]/\[usb\]/' |
 	awk '{ printf "%-16s %6s:    %7s\n", $2, $1, $5 }'
 
 exit 0
