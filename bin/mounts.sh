@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## mounts - list only the "interesting" file system mounts
-## Copyright (C) 2020, 2023 Daniel Haase
+## Copyright (C) 2020-2023 Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -19,25 +19,80 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -o noclobber
 
-function check_command
-{
-	local command="${1}"
+NAME="mounts"
+VERSION="0.3.0"
 
-	if [[ $# -eq 0 || -z "${command}" ]] \
-	|| command -v "${command}" &>/dev/null; then
-		return 0
-	else
-		echo "no such command \"${command}\""
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo "no such command \"${1}\""
 		exit 1
 	fi
 }
 
-check_command "awk"
-check_command "mount"
+function print_version {
+	cat <<-EOF
+		${NAME} ${VERSION}
+		copyright (c) 2020-2023 Daniel Haase
+	EOF
+}
 
-mount | \
-	awk '/\/dev\/sd|mmc/ {print $1" on "$3"  ("$5")"}' \
-	|| exit 2
+function print_usage {
+	print_version
+	cat <<-EOF
+
+		usage:  ${NAME} [--sort | --version | --help]
+
+		   -s | --sort
+		      sort output lexicographically by device name
+
+		   -V | --version
+		      print version information and exit
+
+		   -h | --help
+		      print this usage description and exit
+
+	EOF
+}
+
+check_command "awk"
+check_command "cat"
+check_command "mount"
+check_command "sort"
+
+sort_command="cat"
+
+if [[ $# -eq 1 ]]; then
+	case "${1}" in
+		-s | --sort)
+			sort_command="sort"
+			;;
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		*)
+			print_usage
+			exit 2
+			;;
+	esac
+elif [[ $# -gt 1 ]]; then
+	print_usage
+	exit 2
+fi
+
+awkscript="/\/dev\/sd|nvme|mmc/ { "
+awkscript+="printf \"%-16s   as   %-7s   on   %s\n\", "
+awkscript+="\$1, \$5, \$3 }"
+
+if ! mount | "${sort_command}" | awk "${awkscript}"; then
+	echo "failed to execute command"
+	exit 3
+fi
 
 exit 0
