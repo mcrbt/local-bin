@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##
 ## dns - wrapper around "host" for (reverse) domain name lookups
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,40 +17,101 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-function checkcmd
-{
-	local c="$1"
-	if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
-	which "$c" &> /dev/null
-	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 1; fi
-	return 0
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noclobber
+
+NAME="dns"
+VERSION="0.3.0"
+
+TIMEOUT=4
+
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo "no such command \"${1}\""
+		exit 1
+	fi
 }
 
-checkcmd "awk"
-checkcmd "basename"
-checkcmd "head"
-checkcmd "host"
-checkcmd "perl"
-checkcmd "sed"
+function print_version {
+	cat <<-EOF
+		${NAME} ${VERSION}
+		copyright (c) 2020-2023 Daniel Haase
+	EOF
+}
 
-reverse=0
+function print_usage {
+	print_version
+	cat <<-EOF
 
-if [ $# -eq 0 ]; then echo "usage:  $(basename $0) [-r] <host>"; exit 0; fi
-if [ $# -gt 1 ] && [ $1 == "-r" ]; then reverse=1; shift; fi
+		usage:  ${NAME} <address>...
+		        ${NAME} [--version | --help]
 
-if [ $reverse -eq 0 ]; then
-	for h in $@; do
-		res=$(host $h | head -n 1 -q | awk '{print $4}')
-		if [ "$res" == "alias" ]; then
-			h2=$(host $h | head -n 1 -q | awk '{print $6}' | sed 's/\(.+\)\.$/\1/')
-			res=$(host $h2 | head -n 1 -q | awk '{print $4}')
+		   <address>...
+		      IP address(es) or domain name(s) to resolve
+
+		   -V | --version
+		      print version information and exit
+
+		   -h | --help
+		      print this usage description and exit
+
+	EOF
+}
+
+function resolve {
+	local -ra addresses=("${@}")
+
+	for address in "${addresses[@]}"; do
+		if [[ "${address}" == "-"* ]]; then
+			continue
 		fi
-		echo "$res"
+
+		host -W "${TIMEOUT}" "${address}" |
+			grep --extended-regexp "(domain name)|(address)" |
+			rev |
+			cut --delimiter=" " --fields=1 |
+			rev |
+			sed --expression='s/\(.\+\)\.$/\1/g'
 	done
-else
-	for h in $@; do
-		host $h | head -n 1 -q | awk '{print $5}' | perl -pe 's/(.+)\.$/\1/'
-	done
+}
+
+check_command "cut"
+check_command "grep"
+check_command "host"
+check_command "rev"
+check_command "sed"
+
+if [[ $# -eq 0 ]]; then
+	print_usage
+	exit 2
+elif [[ $# -eq 1 ]]; then
+	case "${1}" in
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		-*)
+			print_usage
+			exit 2
+			;;
+		*) ;;
+	esac
+elif [[ $# -gt 1 ]]; then
+	case "${1}" in
+		-*)
+			print_usage
+			exit 2
+			;;
+		*) ;;
+	esac
 fi
+
+resolve "${*}"
 
 exit 0
