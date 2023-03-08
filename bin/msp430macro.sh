@@ -1,7 +1,7 @@
-#!/usr/bin/env -S bash
+#!/usr/bin/env bash
 ##
-## mspmacro - search for macros and register in MSP430 device specific header files
-## Copyright (C) 2020-2021 Daniel Haase
+## msp430macro - grep MSP430 macros/registers in device-specific header file
+## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,92 +17,111 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-set -efu
+set -o errexit
+set -o nounset
 set -o pipefail
+set -o noclobber
+set -o noglob
 
-## application constants
-TITLE="mspmacro"
-VERSION="0.2.0"
+TITLE="msp430macro"
+VERSION="0.3.1"
 
-## configuration constants
-DEVICE="msp430f5438"
-INCLUDE="/opt/ti/mspgcc/include"
-PATTERN=""
+DEFAULT_DEVICE_NAME="msp430f5438"
+DEVICE_NAME="${DEVICE_NAME:-"${DEFAULT_DEVICE_NAME}"}"
+INCLUDE_PATH="${INCLUDE:-"/opt/ti/mspgcc/include"}"
 
-## check if command "$1" is installed
-function checkcmd
-{
-	local c="$1"
-	if [ $# -eq 0 ] || [ -z "${c}" ] \
-	|| command -v "${c}" &> /dev/null; then return 0
-	else echo "command \"${c}\" not found"; exit 1; fi
+function checkcmd {
+	if ! command -v "${1}" &>/dev/null; then
+		>&2 echo "no such command \"${1}\""
+		exit 1
+	fi
 }
 
-## print version and copyright notice
-function version
-{
-	echo "${TITLE} version ${VERSION}"
-	echo "copyright (c) 2020-2021 Daniel Haase"
+function print_version {
+	cat <<-EOF
+		${TITLE} version ${VERSION}
+		copyright (c) 2020-2023 Daniel Haase
+	EOF
 }
 
-## print usage information
-function usage
-{
-	version
-	echo ""
-	echo "usage:  ${TITLE} [<device>] <pattern>"
-	echo "        ${TITLE} [-V | -h]"
-	echo ""
-	echo "  <device>"
-	echo "    the full MSP430 device name (e.g. \"msp430f5529\")"
-	echo "    (defaults to \"${DEVICE}\")"
-	echo ""
-	echo "  <pattern>"
-	echo "    the search pattern (register, macro, comment, ...)"
-	echo ""
-	echo "  -V | --version"
-	echo "    print version and copyright notice and exit"
-	echo ""
-	echo "  -h | --help"
-	echo "    print this usage information and exit"
-	echo ""
+function print_usage {
+	print_version
+	cat <<-EOF
+
+		usage:  ${TITLE} [<device>] <pattern>
+		        ${TITLE} [--version | --help]
+
+		   <device>
+		      full MSP430 device name (e.g., \"msp430f5529\")
+		      (defaults to \"${DEFAULT_DEVICE_NAME}\")
+
+		   <pattern>
+		      pattern to search for (e.g., macro, register, comment, ...)
+
+		   -V | --version
+		      print version information and exit
+
+		   -h | --help
+		      print this usage description and exit
+
+	EOF
 }
 
-## parse command line arguments
-function parse
-{
-	if [ $# -eq 0 ]; then usage; exit 0
-	elif [ $# -eq 1 ]; then
-		if [ "${1}" == "-V" ] || [ "${1}" == "--version" ]
-		then version; exit 0
-		elif [ "${1}" == "-h" ] || [ "${1}" == "--help" ]
-		then usage; exit 0
-		else PATTERN="${1}"; fi
-	elif [ $# -eq 2 ]; then PATTERN="${2}"; DEVICE="${1}"
-	else usage; exit 2; fi
-}
-
-## check dependencies
 checkcmd "grep"
 
-## parse command line argument
-parse "$@"
+declare pattern
 
-## assemble header file path
-FILE="${INCLUDE}/${DEVICE}.h"
+if [[ $# -eq 0 ]]; then
+	print_usage
+	exit 2
+elif [[ $# -eq 1 ]]; then
+	case "${1}" in
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		*)
+			pattern="'${1}'"
+			;;
+	esac
+elif [[ $# -eq 2 ]]; then
+	DEVICE_NAME="${1}"
+	pattern="'${2}'"
+else
+	print_usage
+	exit 2
+fi
 
-## check if file exists
-if [ ! -f "${FILE}" ]; then
-	echo "file \"${FILE}\" not found"
+if [[ ! -d "${INCLUDE_PATH}" ]]; then
+	>&2 echo "no such include directory \"${INCLUDE_PATH}\""
 	exit 3
 fi
 
-## retrieve result
-RESULT="$(grep "${PATTERN}" "${FILE}")"
+declare -r filepath="${INCLUDE_PATH}/${DEVICE_NAME}.h"
 
-## print result
-if [ -z "${RESULT}" ]; then echo "nothing found"
-else echo "${RESULT}"; fi
+if [[ ! -f "${filepath}" ]]; then
+	>&2 echo "no such file \"${filepath}\""
+	exit 3
+fi
 
-## exit successfully
+if [[ ! -r "${filepath}" ]]; then
+	>&2 echo "no read permission for file \"${filepath}\""
+	exit 3
+fi
+
+declare search_result
+
+search_result="$(grep --color=always "${pattern}" "${filepath}")"
+
+if [[ -z "${search_result}" ]]; then
+	>&2 echo "no matches found for pattern \"${pattern}\""
+	exit 4
+fi
+
+echo "${search_result}"
+
 exit 0
