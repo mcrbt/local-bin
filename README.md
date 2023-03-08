@@ -46,21 +46,17 @@ ln -sv $(pwd)/local-bin/battery.pl /usr/local/bin/battery
 
 ## Description
 
-The collection currently contains the following **34 scripts**:
+The collection currently contains the following **27 scripts**:
 
 * [**`aphwaddr.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/aphwaddr.sh)
   * print hardware address (i.e. *MAC address*) of the wireless
-      access point currently connected to
-  * depends on: `awk`, `basename`, `bash`, `grep`, `ip`, `iw`
+    access point currently connected to
 
 * [**`battery.pl`**](https://github.com/mcrbt/local-bin/blob/master/bin/battery.pl)
   * print capacity (percentage) of one or two installed batteries,
     along with their charging status
-  * if two batteries are installed, a cumulated capacity is calculated
-  * *design capacity* is used as maximium, thus *100%* may never be
-      reached (this can be changed easily)
+  * if more than one battery is installed, a cumulated capacity is calculated
   * the path of the battery system files may be changed accordingly
-  * depends on: `perl`
 
 * [**`cfgsync.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/cfgsync.sh)
   * copy e.g. configuration files of user `root` to all other user's home
@@ -79,17 +75,10 @@ The collection currently contains the following **34 scripts**:
     `$ cfgsync --help` for details)
   * **CAUTION**: the script is intended to
     **override existing configuration files** of local users
-  * depends on: `basename`, `bash`, `cp`, `dirname`, `mkdir`
-
-* [**`cpall.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/cpall.sh)
-  * copy multiple files from one location to another, while optionally
-    prepending, or appending, a prefix, or suffix, to the copied files
-  * depends on: `basename`, `bash`, `cp`
 
 * [**`ddg.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/ddg.sh)
   * open `firefox` and search a pattern with *DuckDuckGo* search engine
     from command line
-  * depends on: `bash`, `firefox`, `sed`
 
 * [**`dictcc.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/dictcc.sh)
   * translate a pattern on [https://www.dict.cc](https://www.dict.cc)
@@ -97,12 +86,10 @@ The collection currently contains the following **34 scripts**:
     multiple words (i.e. multiple arguments)
   * the web browser may be configured, by altering the variable `BROWSER`
     (defaults to `firefox`)
-  * depends on: `bash`, `firefox`, `sed`
 
 * [**`dns.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/dns.sh)
   * retrieve IP address for a specific host name and vice versa using
-      the `host` tool
-  * depends on: `awk`, `basename`, `bash`, `head`, `host`, `perl`, `sed`
+    the `host` tool
 
 * [**`doxystrip.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/doxystrip.sh)
   * strip documentation and comments from a `doxygen` *Doxyfile*
@@ -111,32 +98,23 @@ The collection currently contains the following **34 scripts**:
   * unfortunately, that file is approximately 2500 lines (112 KiB)
   * `doxystrip` removes comments from the Doxyfile, to let it only be
     about 330 lines (12 KiB)
-  * depends on: `bash`, `date`, `mv`, `rm`
-
-* [**`fdiff.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/fdiff.sh)
-  * wrapper around `diff` system tool to get more specialized output
-  * depends on: `awk`, `basename`, `bash`, `diff`
 
 * [**`hex.pl`**](https://github.com/mcrbt/local-bin/blob/master/bin/hex.pl)
   * convert between plain ASCII strings, and its hexadecimal ASCII
     representation
-  * depends on: `perl`
 
 * [**`histdel.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/histdel.sh)
   * clear `bash` command history of current user
-  * depends on: `bash`
 
 * [**`ifinfo.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/ifinfo.sh)
   * extract information about the default network interface and its
     assigned IP addresses
-  * depends on: `awk`, `bash`, `head`, `ip`, `wc`
 
 * [**`incorporate.pl`**](https://github.com/mcrbt/local-bin/blob/master/bin/incorporate.pl)
   * "incorporate" foreign files into a Linux file system by adapting their names
   * whitespaces and lots of special characters are replaced with underscore
     ("\_"), German umlauts and other graphemes are converted to their ASCII
     representation (e.g. "ä"->"ae", "â"->"a", ...)
-  * depends on: `perl`
 
 * [**`invoke.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/invoke.sh)
   * start any program as background task from command line, with
@@ -144,122 +122,79 @@ The collection currently contains the following **34 scripts**:
   * any arguments are forwarded to the new process
   * most useful for software with graphical user interface, to detach
     the background task from the current shell
-  * depends on: `bash`
 
 * [**`ipstat.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/ipstat.sh)
   * print active network interface, private IP address (LAN),
     public IP address (WAN), and TOR exit node IP address, if any
-  * depends on *Arch Linux*'s *init system*, `systemd`
-  * depends on: `awk`, `bash`, `curl`, `grep`, `head`, `ip`, `ps`, `systemctl`
-
-* [**`isgd.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/isgd.sh)
-  * command line URL shortener, using [https://is.gd](https://is.gd)
-  * depends on: `basename`, `bash`, `curl`, `grep`, `perl`, `pgrep`
-
-* [**`lock.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/lock.sh)
-  * lock the screen
-  * alternative screen locking solution to using a real *display manager*
-  * the script is a wrapper around `xsecurelock`, and hence a configuration
-    example
-  * depends on: `bash`, `env`, `xdg-screensaver`, `xsecurelock`
+  * depends on `systemd` init system
 
 * [**`manline.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/manline.sh)
   * view *manual pages* online, at
     [https://www.man7.org](https://www.man7.org/linux/man-pages/)
-  * depends on: `basename`, `bash`, `firefox`
 
 * [**`mirrorgen.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/mirrogen.sh)
   * generate fresh pacman mirrorlist with reflector
   * wrapper around [`reflector`](https://xyne.dev/projects/reflector)
-  * intended for *Arch Linux* systems or derivatives, with `pacman` package manager
-  * depends on: `bash`, `cat`, `date`, `grep`, `mv`, `reflector`, `rm`
-
-* [**`monitor.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/monitor.sh)
-  * quick information about connected monitors
-  * wrapper around `xrandr` to *list* or *count* available monitors
-  * depends on: `awk`, `basename`, `bash`, `xrandr`
+  * intended for *Arch Linux* systems or derivatives with `pacman` package manager
 
 * [**`mounts.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/mounts.sh)
   * list "relevant" devices (hard drives, USB storage devices, SD cards),
     currently mounted
-  * depends on: `awk`, `bash`, `grep`, `mount`
 
-* [**`mspmacro.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/mspmacro.sh)
+* [**`msp430macro.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/msp430macro.sh)
   * search for C preprocessor macros or *special function register* declarations
     in the specified (or default) MSP430 header file
   * assumes the *Texas Instruments&reg;* `mspgcc` toolchain
   * default MSP430 include path, as well as default target device (e.g.
     `msp430f5529`) can be configured
   * prints whatever the `grep` command returns, or "nothing found"
-  * example usage: `$ mspmacro msp430f5529 UCB0TXBUF`
-  * depends on: `bash`, `grep`
+  * example usage: `$ msp430macro msp430f5529 UCB0TXBUF`
 
 * [**`pacpurge.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/pacpurge.sh)
   * delete cached and orphaned packages
-  * intended for *Arch Linux* systems or derivatives, with `pacman` package manager
-  * depends on: `awk`, `bash`, `du`, `ls`, `pacman`, `perl`, `tr`, `wc`
-
-* [**`pdfalign.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/pdfalign.sh)
-  * align all pages of a PDF document to *DIN A4* (210mm x 297mm) using `pdfjam`
-  * `pdfjam` uses `pdflatex` to modify PDF documents
-  * optionally sets PDF meta information *title*, and *author*
-  * depends on: `awk`, `bash`, `cp`, `file`, `grep`, `mv`, `pdfjam`, `pdflatex`,
-    `rm`, `sed`, `tr`
+  * intended for *Arch Linux* systems or derivatives with `pacman` package manager
 
 * [**`pgplookup.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/pgplookup.sh)
   * search a [key server](https://pgp.key-server.io) for PGP public keys
   * **NOTE**: the key server regularly is not responding
-  * depends on: `bash`
 
 * [**`printers.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/printers.sh)
   * list network printers and their IP address
   * wrapper around `lpstat`
-  * depends on: `cut`, `bash`, `lpstat`, `wc`
 
 * [**`pw.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/pw.sh)
   * generate passwords of configurable lengths
   * wrapper around [`secpwgen`](https://github.com/itoffshore/secpwgen) from
     [Zeljko Vrba](http://zvrba.net)
-  * depends on: `awk`, `bash`, `head`, `secpwgen`, `tail`
 
 * [**`refrestore.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/refrestore.sh)
   * reopen hyperlinks stored in separate "`.href`" or "`.url`" files, or
     a single file containing one hyperlink per line
-  * depends on: `basename`, `bash`, `cat`, `firefox`, `sleep`
 
 * [**`rmscreen.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/rmscreen.sh)
   * remove the last screenshot, accidently taken
   * needs to be adapted in order to work with screenshot taking application
     (regards file naming conventions, and storage location)
-  * depends on: `bash`, `date`, `head`, `ls`, `rm`
 
 * [**`space.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/space.sh)
   * list available storage space of relevant devices
   * wrapper around [`df`](https://github.com/coreutils/coreutils/blob/master/src/df.c)
-  * depends on: `awk`, `bash`, `df`, `grep`, `sed`
-
-* [**`tinyurl.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/tinyurl.sh)
-  * command line URL shortener using [https://tinyurl.com](https://tinyurl.com)
-  * depends on: `basename`, `bash`, `curl`, `grep`, `perl`
 
 * [**`torcircuit.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/torcircuit.sh)
   * open a new *TOR* circuit by restarting the `tor` service
   * it is supposed, that the `tor` daemon is already running
   * when done, the old, as well as the new exit node IP address is printed
   * depends on *Arch Linux*'s *init system*, `systemd`, for managing `tor` service
-  * depends on: `awk`, `bash`, `curl`, `grep`, `ip`, `ps`, `systemctl`, `tor`
 
 * [**`trackpad.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/trackpad.sh)
   * disables/ re-enables the *trackpad* device (and the *TrackPoint&reg;*
     device of *Lenovo&reg; ThinkPad&reg;* laptops, if available)
     * if no parameter is given, the *trackpad* is disabled if an
     *optical USB mouse* is detected, and enabled if there is no such mouse
-  * depends on: `basename`, `bash`, `grep`, `xinput`
 
 * [**`wikipedia.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/wikipedia.sh)
   * open a specific *Wikipedia* article from the command line
   * support for any language Wikipedia is available in
-  * depends on: `bash`, `firefox`, `tr`
 
 ## Copyright
 
