@@ -76,6 +76,10 @@ The collection currently contains the following **27 scripts**:
   * **CAUTION**: the script is intended to
     **override existing configuration files** of local users
 
+* [**`clean.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/clean.sh)
+  * clear `bash` command history of current user
+  * must be "sourced" in the current terminal: `. clean.sh`
+
 * [**`ddg.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/ddg.sh)
   * open `firefox` and search a pattern with *DuckDuckGo* search engine
     from command line
@@ -102,9 +106,6 @@ The collection currently contains the following **27 scripts**:
 * [**`hex.pl`**](https://github.com/mcrbt/local-bin/blob/master/bin/hex.pl)
   * convert between plain ASCII strings, and its hexadecimal ASCII
     representation
-
-* [**`histdel.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/histdel.sh)
-  * clear `bash` command history of current user
 
 * [**`ifinfo.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/ifinfo.sh)
   * extract information about the default network interface and its
