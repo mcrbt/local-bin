@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## mounts - list only the "interesting" file system mounts
-## Copyright (C) 2020-2023 Daniel Haase
+## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ set -o pipefail
 set -o noclobber
 
 NAME="mounts"
-VERSION="0.3.0"
+VERSION="0.3.1"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
@@ -87,7 +87,7 @@ elif [[ $# -gt 1 ]]; then
 fi
 
 awkscript="/\/dev\/sd|nvme|mmc/ { "
-awkscript+="printf \"%-16s   as   %-7s   on   %s\n\", "
+awkscript+="printf \"%-16s   as   %-8s   on   %s\n\", "
 awkscript+="\$1, \$5, \$3 }"
 
 if ! mount | "${sort_command}" | awk "${awkscript}"; then
