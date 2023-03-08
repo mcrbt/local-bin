@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ##
 ## ddg - search the web with DuckDuckGo from command line
-## Copyright (C) 2020-2021, 2023 Daniel Haase
+## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -22,7 +22,9 @@ set -o nounset
 set -o pipefail
 set -o noclobber
 
-#VERSION="3.0.2"
+NAME="ddg"
+VERSION="3.1.0"
+
 BROWSER_COMMAND="${BROWSER_COMMAND:-"firefox --new-tab"}"
 
 function check_command {
@@ -32,17 +34,61 @@ function check_command {
 	fi
 }
 
-command_name="${BROWSER_COMMAND%% *}"
-declare -r expanded_command
+function print_version {
+	cat <<-EOF
+		${NAME} ${VERSION}
+		copyright (c) 2020-2023 Daniel Haase
+	EOF
+}
+
+function print_usage {
+	print_version
+	cat <<-EOF
+
+		usage:  ${NAME} [--version | --help] <phrase>...
+
+		   <phrase>...
+		      one or more phrases to search for
+
+		   -V | --version
+		      print version information and exit
+
+		   -h | --help
+		      print this usage description and exit
+
+	EOF
+}
+
+declare -r command_name="${BROWSER_COMMAND%% *}"
 
 check_command "${command_name}"
 check_command "sed"
 
+if [[ $# -eq 0 ]]; then
+	print_usage
+	exit 2
+else
+	case "${1}" in
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		*) ;;
+	esac
+fi
+
+declare -r expanded_command
+declare -r query
+
 expanded_command="$(command -v "${command_name}")" \
 	"${BROWSER_COMMAND/#${command_name} /}"
+query=$(echo "${*}" | sed --expression='s/\+/%2B/g' --expression='s/ /+/g')
 
-query=$(echo "${@}" | sed -e 's/\+/%2B/g' -e 's/ /+/g')
-url="https://start.duckduckgo.com"
+declare url="https://start.duckduckgo.com"
 
 if [[ -n "${query}" ]]; then
 	url="${url}/?q=${query}"
