@@ -23,7 +23,7 @@ set -o pipefail
 set -o noclobber
 
 NAME="dictcc"
-VERSION="0.3.0"
+VERSION="0.3.1"
 BROWSER_COMMAND="${BROWSER_COMMAND:-"firefox --new-tab"}"
 
 function print_version {
@@ -58,10 +58,7 @@ if ! command -v "${command_name}" &>/dev/null; then
 	exit 1
 fi
 
-if [[ $# -eq 0 ]]; then
-	print_usage
-	exit 2
-else
+if [[ $# -ge 1 ]]; then
 	case "${1}" in
 		-V | --version)
 			print_version
@@ -71,24 +68,28 @@ else
 			print_usage
 			exit 0
 			;;
+		-*)
+			>&2 print_usage
+			exit 2
+			;;
 		*) ;;
 	esac
 fi
 
 declare url="https://dict.cc"
 declare -r query="${*}"
-declare -r expanded_command
+declare expanded_command
 
-expanded_command="$(command -v "${command_name}") " \
-	"${BROWSER_COMMAND/#${command_name} /}"
+expanded_command="$(command -v "${command_name}") "
+expanded_command+="${BROWSER_COMMAND/#${command_name} /}"
 
 if [[ $# -gt 0 && -n "${query}" ]]; then
 	url="${url}/?s=${query// /+}"
 fi
 
 if ! eval "${expanded_command} ${url} &>/dev/null &"; then
-	echo "failed to open browser \"${command_name}\""
-	exit 2
+	>&2 echo "failed to open browser \"${command_name}\""
+	exit 3
 fi
 
 exit 0

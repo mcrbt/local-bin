@@ -21,15 +21,16 @@ set -o errexit
 set -o nounset
 set -o pipefail
 set -o noclobber
+set -o noglob
 
 NAME="ddg"
-VERSION="3.1.0"
+VERSION="3.1.2"
 
 BROWSER_COMMAND="${BROWSER_COMMAND:-"firefox --new-tab"}"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
-		echo "no such command \"${1}\""
+		>&2 echo "no such command \"${1}\""
 		exit 1
 	fi
 }
@@ -64,10 +65,7 @@ declare -r command_name="${BROWSER_COMMAND%% *}"
 check_command "${command_name}"
 check_command "sed"
 
-if [[ $# -eq 0 ]]; then
-	print_usage
-	exit 2
-else
+if [[ $# -ge 1 ]]; then
 	case "${1}" in
 		-V | --version)
 			print_version
@@ -81,22 +79,27 @@ else
 	esac
 fi
 
-declare -r expanded_command
-declare -r query
+declare expanded_command
+declare query
 
-expanded_command="$(command -v "${command_name}")" \
-	"${BROWSER_COMMAND/#${command_name} /}"
+expanded_command="$(command -v "${command_name}") "
+expanded_command+="${BROWSER_COMMAND/#${command_name} /}"
 query=$(echo "${*}" | sed --expression='s/\+/%2B/g' --expression='s/ /+/g')
 
-declare url="https://start.duckduckgo.com"
+declare -r base_url="https://duckduckgo.com"
+declare -r start_url="https://start.duckduckgo.com"
+
+declare url
 
 if [[ -n "${query}" ]]; then
-	url="${url}/?q=${query}"
+	url="${base_url}/?q=${query}"
+else
+	url="${start_url}"
 fi
 
 if ! eval "${expanded_command} ${url} &>/dev/null &"; then
-	echo "failed to open browser \"${command_name}\""
-	exit 2
+	>&2 echo "failed to open browser \"${command_name}\""
+	exit 3
 fi
 
 exit 0
