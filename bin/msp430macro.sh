@@ -66,6 +66,7 @@ function print_usage {
 	EOF
 }
 
+check_command "cat"
 check_command "grep"
 
 declare pattern

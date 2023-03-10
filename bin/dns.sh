@@ -84,6 +84,7 @@ function resolve {
 	done
 } 2>/dev/null
 
+check_command "cat"
 check_command "cut"
 check_command "grep"
 check_command "host"

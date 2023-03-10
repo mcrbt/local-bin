@@ -21,7 +21,6 @@ set -o errexit
 set -o nounset
 set -o pipefail
 set -o noclobber
-set -o noglob
 
 NAME="ddg"
 VERSION="3.1.2"
@@ -63,6 +62,7 @@ function print_usage {
 declare -r command_name="${BROWSER_COMMAND%% *}"
 
 check_command "${command_name}"
+check_command "cat"
 check_command "sed"
 
 if [[ $# -ge 1 ]]; then

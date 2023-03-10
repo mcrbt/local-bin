@@ -53,6 +53,7 @@ function print_usage {
 	EOF
 }
 
+check_command "cat"
 check_command "clear"
 check_command "history"
 

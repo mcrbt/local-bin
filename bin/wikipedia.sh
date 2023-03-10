@@ -78,12 +78,13 @@ function prepare_query() {
 }
 
 declare -r command_name="${BROWSER_COMMAND%% *}"
-declare language="${DEFAULT_LANGUAGE}"
-declare -a phrases=()
 
 check_command "${command_name}"
+check_command "cat"
 check_command "tr"
 
+declare language="${DEFAULT_LANGUAGE}"
+declare -a phrases=()
 declare expanded_command
 
 expanded_command="$(command -v "${command_name}") "
