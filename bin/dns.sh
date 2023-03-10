@@ -17,19 +17,21 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
+# shellcheck disable=SC2310
+
 set -o errexit
 set -o nounset
 set -o pipefail
 set -o noclobber
 
 NAME="dns"
-VERSION="0.3.0"
+VERSION="0.3.2"
 
-TIMEOUT=4
+TIMEOUT="${TIMEOUT:-"4"}"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
-		echo "no such command \"${1}\""
+		>&2 echo "no such command \"${1}\""
 		exit 1
 	fi
 }
@@ -60,6 +62,11 @@ function print_usage {
 	EOF
 }
 
+function fail_usage {
+	>&2 print_usage
+	exit 2
+}
+
 function resolve {
 	local -ra addresses=("${@}")
 
@@ -75,7 +82,7 @@ function resolve {
 			rev |
 			sed --expression='s/\(.\+\)\.$/\1/g'
 	done
-}
+} 2>/dev/null
 
 check_command "cut"
 check_command "grep"
@@ -84,8 +91,7 @@ check_command "rev"
 check_command "sed"
 
 if [[ $# -eq 0 ]]; then
-	print_usage
-	exit 2
+	fail_usage
 elif [[ $# -eq 1 ]]; then
 	case "${1}" in
 		-V | --version)
@@ -97,21 +103,15 @@ elif [[ $# -eq 1 ]]; then
 			exit 0
 			;;
 		-*)
-			print_usage
-			exit 2
-			;;
-		*) ;;
-	esac
-elif [[ $# -gt 1 ]]; then
-	case "${1}" in
-		-*)
-			print_usage
-			exit 2
+			fail_usage
 			;;
 		*) ;;
 	esac
 fi
 
-resolve "${*}"
+if ! resolve "${*}"; then
+	>&2 echo "operation failed"
+	exit 3
+fi
 
 exit 0
