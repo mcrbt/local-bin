@@ -27,7 +27,7 @@ use File::Basename;
 binmode STDOUT, ':encoding(UTF-8)' or
     die 'STDOUT does not support UTF-8 encoding';
 
-our $VERSION = v0.2.2;
+our $VERSION = v0.2.3;
 
 my $POWER_SUPPLY_PATH =
     $ENV{'POWER_SUPPLY_PATH'} || '/sys/class/power_supply';
@@ -315,10 +315,13 @@ sub aggregate_output {
 parse_arguments;
 
 my @supplies = load_battery_power_supplies;
-my %totals = aggregate_totals(\@supplies);
 
-aggregate_status(\%totals, \@supplies);
-push @supplies, \%totals;
+if (@supplies > 1) {
+    my %totals = aggregate_totals(\@supplies);
+
+    aggregate_status(\%totals, \@supplies);
+    push @supplies, \%totals;
+}
 
 say aggregate_output(\@supplies);
 exit 0;
