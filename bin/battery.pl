@@ -27,7 +27,7 @@ use File::Basename;
 binmode STDOUT, ':encoding(UTF-8)' or
     die 'STDOUT does not support UTF-8 encoding';
 
-our $VERSION = v0.2.1;
+our $VERSION = v0.2.2;
 
 my $POWER_SUPPLY_PATH =
     $ENV{'POWER_SUPPLY_PATH'} || '/sys/class/power_supply';
@@ -40,29 +40,27 @@ sub trim {
     return $string;
 }
 
-sub check_scalar {
+sub is_valid_scalar {
     my ($value) = @_;
 
-    if (not defined $value) {
-        die 'undefined argument';
-    }
-
-    if (ref $value ne q{}) {
-        die 'non-reference scalar expected';
-    }
-
-    if (not length trim($value)) {
-        die 'non-empty scalar expected';
-    }
-
-    return;
+    return (
+        defined $value
+        and
+        ref $value eq q{}
+        and
+        length trim($value)
+    );
 }
 
 sub raise {
     my ($message) = @_;
 
-    check_scalar($message);
-    say { \*STDERR } $message;
+    if (is_valid_scalar($message)) {
+        say { \*STDERR } $message;
+    } else {
+        die 'invalid scalar';
+    }
+
     return;
 }
 
@@ -126,7 +124,9 @@ sub parse_arguments {
 sub get_power_supply_data {
     my ($supply) = @_;
 
-    check_scalar($supply);
+    if (not is_valid_scalar($supply)) {
+        die 'invalid scalar';
+    }
 
     my $filename = "$supply/uevent";
 
@@ -162,11 +162,20 @@ sub get_power_supply_data {
 }
 
 sub load_battery_power_supplies {
+    if (not -d $POWER_SUPPLY_PATH) {
+        panic("no such directory \"$POWER_SUPPLY_PATH\"");
+    }
+
     my @files = glob "$POWER_SUPPLY_PATH/*";
     my @supplies;
 
     foreach my $file (@files) {
         my %supply = get_power_supply_data($file);
+
+        if (not exists $supply{'type'}) {
+            next;
+        }
+
         my $type = lc $supply{'type'};
 
         if ($type eq 'battery') {
@@ -181,7 +190,7 @@ sub aggregate_totals {
     my ($supplies) = @_;
 
     if (ref $supplies ne 'ARRAY') {
-        die 'array reference expected';
+        die 'invalid array reference';
     }
 
     my %totals = ('name' => 'total');
@@ -199,11 +208,11 @@ sub aggregate_status {
     my ($totals, $supplies) = @_;
 
     if (ref $totals ne 'HASH') {
-        die 'hash reference expected';
+        die 'invalid hash reference';
     }
 
     if (ref $supplies ne 'ARRAY') {
-        die 'array reference expected';
+        die 'invalid array reference';
     }
 
     my %status_map = (
@@ -219,9 +228,11 @@ sub aggregate_status {
         $status_map{$status} += 1;
     }
 
-    my $supplier_count = scalar @{$supplies};
+    my $supply_count = scalar @{$supplies};
 
-    if ($status_map{'full'} == $supplier_count) {
+    if ($supply_count == 0) {
+        $totals->{'status'} = 'unknown';
+    } elsif ($status_map{'full'} == $supply_count) {
         $totals->{'status'} = 'full';
     } elsif ($status_map{'charging'} > $status_map{'discharging'}) {
         $totals->{'status'} = 'charging';
@@ -245,17 +256,18 @@ sub aggregate_status {
 sub percentage {
     my ($share, $total) = @_;
 
-    check_scalar($share);
-    check_scalar($total);
+    if (is_valid_scalar($share) and is_valid_scalar($total)) {
+        return (($share / $total) * 100);
+    }
 
-    return (($share / $total) * 100);
+    return 0;
 }
 
 sub calculate_capacity {
     my ($data) = @_;
 
     if (ref $data ne 'HASH') {
-        die 'hash reference expected';
+        die 'invalid hash reference';
     }
 
     return percentage($data->{'energy_now'}, $data->{'energy_full'});
@@ -265,7 +277,7 @@ sub calculate_design_capacity {
     my ($data) = @_;
 
     if (ref $data ne 'HASH') {
-        die 'hash reference expected';
+        die 'invalid hash reference';
     }
 
     return percentage($data->{'energy_now'}, $data->{'energy_full_design'});
@@ -275,7 +287,7 @@ sub format_output {
     my ($data) = @_;
 
     if (ref $data ne 'HASH') {
-        die 'hash reference expected';
+        die 'invalid hash reference';
     }
 
     my $capacity = calculate_capacity($data);
@@ -290,7 +302,7 @@ sub aggregate_output {
     my @output;
 
     if (ref $supplies ne 'ARRAY') {
-        die 'array reference expected';
+        die 'invalid array reference';
     }
 
     foreach (@{$supplies}) {
