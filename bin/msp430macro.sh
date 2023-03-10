@@ -21,16 +21,15 @@ set -o errexit
 set -o nounset
 set -o pipefail
 set -o noclobber
-set -o noglob
 
 TITLE="msp430macro"
-VERSION="0.3.1"
+VERSION="0.3.5"
 
-DEFAULT_DEVICE_NAME="msp430f5438"
+DEFAULT_DEVICE_NAME="msp430f5529"
 DEVICE_NAME="${DEVICE_NAME:-"${DEFAULT_DEVICE_NAME}"}"
-INCLUDE_PATH="${INCLUDE:-"/opt/ti/mspgcc/include"}"
+INCLUDE_PATH="${INCLUDE_PATH:-"/opt/ti/mspgcc/include"}"
 
-function checkcmd {
+function check_command {
 	if ! command -v "${1}" &>/dev/null; then
 		>&2 echo "no such command \"${1}\""
 		exit 1
@@ -52,7 +51,7 @@ function print_usage {
 		        ${TITLE} [--version | --help]
 
 		   <device>
-		      full MSP430 device name (e.g., \"msp430f5529\")
+		      full MSP430 device name (e.g., \"msp430f2013\")
 		      (defaults to \"${DEFAULT_DEVICE_NAME}\")
 
 		   <pattern>
@@ -67,7 +66,7 @@ function print_usage {
 	EOF
 }
 
-checkcmd "grep"
+check_command "grep"
 
 declare pattern
 
@@ -85,15 +84,13 @@ elif [[ $# -eq 1 ]]; then
 			exit 0
 			;;
 		*)
-			pattern="'${1}'"
+			pattern="${1}"
 			;;
 	esac
-elif [[ $# -eq 2 ]]; then
+elif [[ $# -ge 2 ]]; then
 	DEVICE_NAME="${1}"
-	pattern="'${2}'"
-else
-	print_usage
-	exit 2
+	shift
+	pattern="${*}"
 fi
 
 if [[ ! -d "${INCLUDE_PATH}" ]]; then
@@ -104,7 +101,7 @@ fi
 declare -r filepath="${INCLUDE_PATH}/${DEVICE_NAME}.h"
 
 if [[ ! -f "${filepath}" ]]; then
-	>&2 echo "no such file \"${filepath}\""
+	>&2 echo "no such header file \"${filepath}\""
 	exit 3
 fi
 
@@ -113,15 +110,9 @@ if [[ ! -r "${filepath}" ]]; then
 	exit 3
 fi
 
-declare search_result
-
-search_result="$(grep --color=always "${pattern}" "${filepath}")"
-
-if [[ -z "${search_result}" ]]; then
+if ! grep --color=auto "${pattern}" "${filepath}" 2>/dev/null; then
 	>&2 echo "no matches found for pattern \"${pattern}\""
 	exit 4
 fi
-
-echo "${search_result}"
 
 exit 0
