@@ -16,6 +16,8 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 
+# shellcheck disable=SC2310
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -56,6 +58,15 @@ function print_usage {
 	EOF
 }
 
+function print_mounts {
+	local -r sort_command="${1}"
+	local awkscript="/\/dev\/sd|nvme|mmc/ { "
+	awkscript+="printf \"%-16s   as   %-8s   on   %s\n\", "
+	awkscript+="\$1, \$5, \$3 }"
+
+	mount | "${sort_command}" | awk "${awkscript}"
+} 2>/dev/null
+
 check_command "awk"
 check_command "cat"
 check_command "mount"
@@ -86,12 +97,8 @@ elif [[ $# -gt 1 ]]; then
 	exit 2
 fi
 
-awkscript="/\/dev\/sd|nvme|mmc/ { "
-awkscript+="printf \"%-16s   as   %-8s   on   %s\n\", "
-awkscript+="\$1, \$5, \$3 }"
-
-if ! mount | "${sort_command}" | awk "${awkscript}"; then
-	echo "failed to execute command"
+if ! print_mounts "${sort_command}"; then
+	echo "operation failed"
 	exit 3
 fi
 
