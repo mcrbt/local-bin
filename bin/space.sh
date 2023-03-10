@@ -17,6 +17,8 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
+# shellcheck disable=SC2310
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -54,7 +56,27 @@ function print_usage {
 	EOF
 }
 
+function print_space {
+	local expression="/dev/((sd[a-z][0-9]+)|(nvme[0-9]+n[0-9]+)|"
+	expression+="(mmcblk[0-9]+p[0-9]+))"
+	local -r mmc_regex="\/dev\/mmcblk[0-9]p[0-9]"
+	local -r columns_3=" \+.\+ \+.\+ \+.\+ \+"
+	local -r columns_4=".\+${columns_3}"
+
+	df --human-readable --local --output=source,avail,target |
+		grep --perl-regexp "${expression}" |
+		awk '{print $1" "$0}' |
+		sed --expression="s/\(${columns_4}\)\/\$/\1 [root]/g" \
+			--expression="s/\/home\$/ [home]/" \
+			--expression="s/\/\(boot\)\|\(efi\).*\$/ [boot]/" \
+			--expression="s/\(${mmc_regex}${columns_3}\)/\1 [sdcard]/" \
+			--expression="s/\/mnt.*/ [usb]/" \
+			--expression="s/\(${columns_4}\)\/.\+\$/\1 [other]/g" |
+		awk '{ printf "%-17s  %8s:   %7s\n", $2, $4, $3 }'
+}
+
 check_command "awk"
+check_command "cat"
 check_command "df"
 check_command "grep"
 check_command "sed"
@@ -79,17 +101,9 @@ elif [[ $# -gt 1 ]]; then
 	exit 2
 fi
 
-expression='/dev/((sd[a-z][0-9]+)|(nvme[0-9]+n[0-9]+)|(mmcblk[0-9]+p[0-9]+))'
-
-df --human-readable --local --output=source,avail,target |
-	grep --perl-regexp "${expression}" |
-	awk '{print $1" "$0}' |
-	sed --expression='s/\(.\+ \+.\+ \+.\+ \+.\+ \+\)\/$/\1 [root]/g' \
-		--expression='s/\/home.*/ [home]/' \
-		--expression='s/\/\(boot\)\|\(efi\).*$/ [boot]/' \
-		--expression='s/\(\/dev\/mmcblk[0-9]p[0-9] \+.\+ \+.\+ \+.\+ \+\)/\1 [sdcard]/' \
-		--expression='s/\/mnt.*/ [usb]/' \
-		--expression='s/\(.\+ \+.\+ \+.\+ \+.\+ \+\)\/.\+$/\1 [other]/g' |
-	awk '{ printf "%-17s  %8s:   %7s\n", $2, $4, $3 }'
+if ! print_space 2>/dev/null; then
+	>&2 echo "operation failed"
+	exit 3
+fi
 
 exit 0
