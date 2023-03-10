@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ##
 ## wikipedia - open specific Wikipedia article from command line
-## Copyright (C) 2020-2023 Daniel Haase
+## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ set -o pipefail
 set -o noclobber
 
 TITLE="wikipedia"
-VERSION="0.3.3"
+VERSION="0.3.5"
 
 BROWSER_COMMAND="${BROWSER_COMMAND:-"firefox --new-tab"}"
 DEFAULT_LANGUAGE="en"
@@ -64,6 +64,11 @@ function print_usage {
 	EOF
 }
 
+function fail_usage {
+	>&2 print_usage
+	exit 2
+}
+
 function prepare_query() {
 	local -a phrases=("$@")
 	local query="${phrases[*]}"
@@ -72,20 +77,19 @@ function prepare_query() {
 	echo "${query[*]// /_}"
 }
 
-command_name="${BROWSER_COMMAND%% *}"
-language="${DEFAULT_LANGUAGE}"
-phrases=()
+declare -r command_name="${BROWSER_COMMAND%% *}"
+declare language="${DEFAULT_LANGUAGE}"
+declare -a phrases=()
 
 check_command "${command_name}"
 check_command "tr"
 
+declare expanded_command
+
 expanded_command="$(command -v "${command_name}") "
 expanded_command+="${BROWSER_COMMAND/#${command_name} /}"
 
-if [[ $# -eq 0 ]]; then
-	print_usage
-	exit 2
-elif [[ $# -eq 1 ]]; then
+if [[ $# -eq 1 ]]; then
 	case "${1}" in
 		-V | --version)
 			print_version
@@ -96,8 +100,7 @@ elif [[ $# -eq 1 ]]; then
 			exit 0
 			;;
 		-*)
-			print_usage
-			exit 2
+			fail_usage
 			;;
 		*)
 			phrases=("${1}")
@@ -106,8 +109,7 @@ elif [[ $# -eq 1 ]]; then
 elif [[ $# -eq 2 ]]; then
 	case "${1}" in
 		-*)
-			print_usage
-			exit 2
+			fail_usage
 			;;
 		*)
 			phrases=("$@")
@@ -117,16 +119,14 @@ elif [[ $# -gt 2 ]]; then
 	case "${1}" in
 		-l | --language)
 			if [[ "${#2}" -lt 2 || "${#2}" -gt 3 ]]; then
-				print_usage
-				exit 2
+				fail_usage
 			fi
 
 			language="${2}"
 			shift 2
 			;;
 		-*)
-			print_usage
-			exit 2
+			fail_usage
 			;;
 		*) ;;
 	esac
@@ -134,7 +134,9 @@ elif [[ $# -gt 2 ]]; then
 	phrases=("$@")
 fi
 
-url="https://www.wikipedia.org/"
+declare url="https://www.wikipedia.org/"
+declare query
+
 query="$(prepare_query "${phrases[@]}")"
 
 if [[ -n "${query}" ]]; then
@@ -142,7 +144,7 @@ if [[ -n "${query}" ]]; then
 fi
 
 if ! eval "${expanded_command} ${url} &>/dev/null &"; then
-	echo "failed to open browser \"${command_name}\""
+	>&2 echo "failed to open browser \"${command_name}\""
 	exit 3
 fi
 
