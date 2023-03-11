@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ##
-## pw - generate password of configurable length using secpwgen
+## pw - generate password(s) of configurable length(s) using "pwgen"
 ## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
@@ -17,15 +17,18 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
+# shellcheck disable=SC2310
+
 set -o errexit
 set -o nounset
 set -o pipefail
 set -o noclobber
 
 NAME="pw"
-VERSION="0.2.0"
+VERSION="0.3.0"
 
 DEFAULT_LENGTH="${DEFAULT_LENGTH:-31}"
+DEFAULT_COUNT="${DEFAULT_COUNT:-1}"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
@@ -45,16 +48,17 @@ function print_usage {
 	print_version
 	cat <<-EOF
 
-		usage:  ${NAME} [--raw] [<length>]
+		usage:  ${NAME} [<length>] [<count>]
 		        ${NAME} [--version | --help]
 
 		   <length>
-		      generate password of at least <length> characters
+		      generate password of <length> characters
 		      (defaults to ${DEFAULT_LENGTH})
 
-		   -r | --raw
-		      generate password of (<length> * 8) arbitrary bits
-		      (BASE64-encoded)
+		   <count>
+		      generate <count> different passwords of
+		      <length> characters each
+			  (defaults to ${DEFAULT_COUNT})
 
 		   -V | --version
 		      print version information and exit
@@ -70,19 +74,24 @@ function fail_usage {
 	exit 2
 }
 
-check_command "cut"
-check_command "head"
-check_command "secpwgen"
-check_command "tail"
+function is_number {
+	declare -r argument="${1}"
+	declare -r number_regex="^[0-9]+$"
+
+	if [[ "${argument}" =~ ${number_regex} ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+check_command "pwgen"
 
 declare password_length="${DEFAULT_LENGTH}"
-declare generation_mode="-Aads"
+declare password_count="${DEFAULT_COUNT}"
 
 if [[ $# -eq 1 ]]; then
 	case "${1}" in
-		-r | --raw)
-			generation_mode="-r"
-			;;
 		-V | --version)
 			print_version
 			exit 0
@@ -99,38 +108,19 @@ if [[ $# -eq 1 ]]; then
 			;;
 	esac
 elif [[ $# -eq 2 ]]; then
-	case "${1}" in
-		-r | --raw)
-			generation_mode="-r"
-			;;
-		*)
-			fail_usage
-			;;
-	esac
-
-	if [[ "${2}" == "-"* ]]; then
-		fail_usage
-	fi
-
-	password_length="${2}"
+	password_length="${1}"
+	password_count="${2}"
 elif [[ $# -gt 2 ]]; then
 	fail_usage
 fi
 
-declare -r number_regex="^[0-9]+$"
-
-if ! [[ "${password_length}" =~ ${number_regex} ]]; then
+if ! is_number "${password_length}" ||
+   ! is_number "${password_count}"; then
 	fail_usage
 fi
 
-if [[ "${generation_mode}" == "-r" ]]; then
-	password_length=$((password_length * 8))
-fi
-
-if ! secpwgen "${generation_mode}" "${password_length}" 2>/dev/null |
-	head --lines=-3 |
-	tail --lines=-1 |
-	cut --delimiter=" " --fields=1 2>/dev/null; then
+if ! pwgen --capitalize --numerals --symbols --secure -1 \
+	"${password_length}" "${password_count}" 2>/dev/null; then
 	>&2 echo "operation failed"
 	exit 3
 fi
