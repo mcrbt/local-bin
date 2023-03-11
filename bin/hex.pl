@@ -124,7 +124,7 @@ if (@ARGV == 1) {
         say ascii_to_hex($argument);
     }
 } elsif (@ARGV == 2) {
-    my @flags = grep { /^-a|x$/xms } @ARGV;
+    my @flags = grep { /^-(a|x)$/xms } @ARGV;
 
     if (is_flag($flags[0], '-a') or is_flag($flags[1], '-a')) {
         my @arguments = grep { !/^-a$/xms } @ARGV;
