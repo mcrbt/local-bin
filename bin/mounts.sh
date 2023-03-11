@@ -72,7 +72,7 @@ check_command "cat"
 check_command "mount"
 check_command "sort"
 
-sort_command="cat"
+declare sort_command="cat"
 
 if [[ $# -eq 1 ]]; then
 	case "${1}" in
