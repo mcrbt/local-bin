@@ -54,7 +54,7 @@ function print_usage {
 declare -r command_name="${BROWSER_COMMAND%% *}"
 
 if ! command -v "${command_name}" &>/dev/null; then
-	echo "no such command \"${command_name}\""
+	echo >&2 "no such command \"${command_name}\""
 	exit 1
 fi
 
@@ -69,7 +69,7 @@ if [[ $# -ge 1 ]]; then
 			exit 0
 			;;
 		-*)
-			>&2 print_usage
+			print_usage >&2
 			exit 2
 			;;
 		*) ;;
@@ -88,7 +88,7 @@ if [[ $# -gt 0 && -n "${query}" ]]; then
 fi
 
 if ! eval "${expanded_command} ${url} &>/dev/null &"; then
-	>&2 echo "failed to open browser \"${command_name}\""
+	echo >&2 "failed to open browser \"${command_name}\""
 	exit 3
 fi
 

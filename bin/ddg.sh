@@ -29,7 +29,7 @@ BROWSER_COMMAND="${BROWSER_COMMAND:-"firefox --new-tab"}"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
-		>&2 echo "no such command \"${1}\""
+		echo >&2 "no such command \"${1}\""
 		exit 1
 	fi
 }
@@ -98,7 +98,7 @@ else
 fi
 
 if ! eval "${expanded_command} ${url} &>/dev/null &"; then
-	>&2 echo "failed to open browser \"${command_name}\""
+	echo >&2 "failed to open browser \"${command_name}\""
 	exit 3
 fi
 

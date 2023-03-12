@@ -31,7 +31,7 @@ TIMEOUT="${TIMEOUT:-"4"}"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
-		>&2 echo "no such command \"${1}\""
+		echo >&2 "no such command \"${1}\""
 		exit 1
 	fi
 }
@@ -63,7 +63,7 @@ function print_usage {
 }
 
 function fail_usage {
-	>&2 print_usage
+	print_usage >&2
 	exit 2
 }
 
@@ -111,7 +111,7 @@ elif [[ $# -eq 1 ]]; then
 fi
 
 if ! resolve "${*}"; then
-	>&2 echo "operation failed"
+	echo >&2 "operation failed"
 	exit 3
 fi
 

@@ -25,10 +25,10 @@ NAME="clean"
 VERSION="0.2.0"
 
 function check_command {
-    if ! command -v "${1}" &>/dev/null; then
-        echo "no such command \"${1}\""
-        exit 1
-    fi
+	if ! command -v "${1}" &>/dev/null; then
+		echo >&2 "no such command \"${1}\""
+		exit 1
+	fi
 }
 
 function print_version {
@@ -45,10 +45,10 @@ function print_usage {
 		usage:  ${NAME} [--version | --help]
 
 		   -V | --version
-		      print version information and exit
+			  print version information and exit
 
 		   -h | --help
-		      print this usage description and exit
+			  print this usage description and exit
 
 	EOF
 }
@@ -58,26 +58,26 @@ check_command "clear"
 check_command "history"
 
 if [[ $# -eq 1 ]]; then
-    case "${1}" in
-        -V | --version)
-            print_version
-            exit 0
-            ;;
-        -h | --help)
-            print_usage
-            exit 0
-            ;;
-        *)
-            print_usage
-            exit 2
-            ;;
-    esac
+	case "${1}" in
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		*)
+			print_usage
+			exit 2
+			;;
+	esac
 elif [[ $# -gt 1 ]]; then
-    print_usage
-    exit 2
+	print_usage
+	exit 2
 fi
 
 clear
 history -cw
-echo -n "" > "${HOME}/.bash_history"
+echo -n "" >"${HOME}/.bash_history"
 history -cw

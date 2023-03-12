@@ -30,7 +30,7 @@ SCREENSHOT_DIRECTORY="${SCREENSHOT_DIRECTORY:-""}"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
-		>&2 echo "no such command \"${1}\""
+		echo >&2 "no such command \"${1}\""
 		exit 1
 	fi
 }
@@ -65,8 +65,8 @@ function find_subdirectory_by_regex {
 	local -r regex="${1}"
 
 	if [[ -z "${parent_directory}" ||
-	      ! -d "${parent_directory}" ||
-		  -z "${regex}" ]]; then
+		! -d "${parent_directory}" ||
+		-z "${regex}" ]]; then
 		return 1
 	fi
 
@@ -103,7 +103,7 @@ function find_picture_directory {
 
 function find_screenshot_directory {
 	if [[ -n "${SCREENSHOT_DIRECTORY}" &&
-	      -d "${SCREENSHOT_DIRECTORY}" ]]; then
+		-d "${SCREENSHOT_DIRECTORY}" ]]; then
 		echo "${SCREENSHOT_DIRECTORY}"
 		return 0
 	fi
@@ -111,7 +111,8 @@ function find_screenshot_directory {
 	local picture_directory="$(find_picture_directory)"
 	local directory
 
-	if [[ -z "${picture_directory}" || ! -d "${picture_directory}" ]]; then
+	if [[ -z "${picture_directory}" ||
+		! -d "${picture_directory}" ]]; then
 		return 1
 	fi
 
@@ -135,11 +136,11 @@ function get_file_birth {
 		return 1
 	fi
 
-	local birth="$(stat --format=\"%w\" "${filepath}" | \
+	local birth="$(stat --format=\"%w\" "${filepath}" |
 		cut --delimiter=\" \" --fields=1)"
 
 	if [[ "${birth}" == "-" ]]; then
-		birth="$(stat --format=\"%y\" "${filepath}" | \
+		birth="$(stat --format=\"%y\" "${filepath}" |
 			cut --delimiter=\" \" --fields=1)"
 	fi
 
@@ -202,12 +203,9 @@ fi
 declare -r directory="$(find_screenshot_directory)"
 
 if [[ ! -d "${directory}" ]]; then
-	>&2 echo "failed to locate screenshot directory"
+	echo >&2 "failed to locate screenshot directory"
 	exit 3
 fi
-
-echo "screenshot directory: \"${directory}\""
-exit 0
 
 declare -r screenshot="$(find_latest_screenshot "${directory}")"
 
@@ -217,7 +215,7 @@ if [[ -z "${screenshot}" ]]; then
 fi
 
 if [[ ! -f "${directory}/${screenshot}" ]]; then
-	>&2 echo "failed to locate most recent screenshot"
+	echo >&2 "failed to locate most recent screenshot"
 	exit 3
 fi
 
@@ -235,12 +233,12 @@ if ! confirm_deletion "${directory}/${screenshot}"; then
 fi
 
 if [[ ! -w "${directory}" || ! -x "${directory}" ]]; then
-	>&2 echo "insufficient directory permissions to delete screenshot"
+	echo >&2 "insufficient directory permissions to delete screenshot"
 	exit 3
 fi
 
 if ! rm --force "${directory}/${screenshot}" 2>/dev/null; then
-	>&2 echo "operation failed"
+	echo >&2 "operation failed"
 	exit 4
 fi
 

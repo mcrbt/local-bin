@@ -31,7 +31,7 @@ INCLUDE_PATH="${INCLUDE_PATH:-"/opt/ti/mspgcc/include"}"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
-		>&2 echo "no such command \"${1}\""
+		echo >&2 "no such command \"${1}\""
 		exit 1
 	fi
 }
@@ -95,24 +95,24 @@ elif [[ $# -ge 2 ]]; then
 fi
 
 if [[ ! -d "${INCLUDE_PATH}" ]]; then
-	>&2 echo "no such include directory \"${INCLUDE_PATH}\""
+	echo >&2 "no such include directory \"${INCLUDE_PATH}\""
 	exit 3
 fi
 
 declare -r filepath="${INCLUDE_PATH}/${DEVICE_NAME}.h"
 
 if [[ ! -f "${filepath}" ]]; then
-	>&2 echo "no such header file \"${filepath}\""
+	echo >&2 "no such header file \"${filepath}\""
 	exit 3
 fi
 
 if [[ ! -r "${filepath}" ]]; then
-	>&2 echo "no read permission for file \"${filepath}\""
+	echo >&2 "no read permission for file \"${filepath}\""
 	exit 3
 fi
 
 if ! grep --color=auto "${pattern}" "${filepath}" 2>/dev/null; then
-	>&2 echo "no matches found for pattern \"${pattern}\""
+	echo >&2 "no matches found for pattern \"${pattern}\""
 	exit 4
 fi
 

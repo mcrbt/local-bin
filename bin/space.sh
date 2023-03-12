@@ -29,7 +29,7 @@ VERSION="0.4.0"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
-		echo "no such command \"${1}\""
+		echo >&2 "no such command \"${1}\""
 		exit 1
 	fi
 }
@@ -102,7 +102,7 @@ elif [[ $# -gt 1 ]]; then
 fi
 
 if ! print_space 2>/dev/null; then
-	>&2 echo "operation failed"
+	echo >&2 "operation failed"
 	exit 3
 fi
 

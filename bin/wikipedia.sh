@@ -30,7 +30,7 @@ DEFAULT_LANGUAGE="en"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
-		echo "no such command \"${1}\""
+		echo >&2 "no such command \"${1}\""
 		exit 1
 	fi
 }
@@ -65,7 +65,7 @@ function print_usage {
 }
 
 function fail_usage {
-	>&2 print_usage
+	print_usage >&2
 	exit 2
 }
 
@@ -145,7 +145,7 @@ if [[ -n "${query}" ]]; then
 fi
 
 if ! eval "${expanded_command} ${url} &>/dev/null &"; then
-	>&2 echo "failed to open browser \"${command_name}\""
+	echo >&2 "failed to open browser \"${command_name}\""
 	exit 3
 fi
 

@@ -44,11 +44,9 @@ sub is_valid_scalar {
     my ($value) = @_;
 
     return (
-        defined $value
-        and
-        ref $value eq q{}
-        and
-        length trim($value)
+        defined $value and
+            ref $value eq q{} and
+            length trim($value)
     );
 }
 
