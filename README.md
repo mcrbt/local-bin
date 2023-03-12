@@ -156,17 +156,16 @@ The collection currently contains the following **27 scripts**:
   * intended for *Arch Linux* systems or derivatives with `pacman` package manager
 
 * [**`pgplookup.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/pgplookup.sh)
-  * search a [key server](https://pgp.key-server.io) for PGP public keys
-  * **NOTE**: the key server regularly is not responding
+  * query a [key server](https://keyserver.ubuntu.com) for PGP public keys
 
 * [**`printers.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/printers.sh)
   * list network printers and their IP address
   * wrapper around `lpstat`
 
 * [**`pw.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/pw.sh)
-  * generate passwords of configurable lengths
-  * wrapper around [`secpwgen`](https://github.com/itoffshore/secpwgen) from
-    [Zeljko Vrba](http://zvrba.net)
+  * generate password(s) of configurable length(s)
+  * wrapper around [`pwgen`](https://sourceforge.net/projects/pwgen) from
+    Theodore Ts'o &lt;[tytso@alum.mit.edu](mailto:tytso@alum.mit.edu)&gt;
 
 * [**`refrestore.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/refrestore.sh)
   * reopen hyperlinks stored in separate "`.href`" or "`.url`" files, or

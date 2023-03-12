@@ -1,7 +1,7 @@
-#!/usr/bin/env -S bash
+#!/usr/bin/env bash
 ##
-## pgplookup - search keyserver for PGP keys
-## Copyright (C) 2021, 2023 Daniel Haase
+## pgplookup - query keyserver for PGP keys
+## Copyright (C) 2021-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,36 +17,89 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-#VERSION="0.1.1"
-BROWSER="firefox --new-tab"
-SERVER="https://pgp.key-server.io"
-
 set -o errexit
 set -o nounset
 set -o pipefail
+set -o noclobber
 
-function checkcmd
-{
-	local c="${1%% *}"
+NAME="pgplookup"
+VERSION="0.2.0"
 
-	if [[ $# -eq 0 ]] \
-	|| [[ -z "${c}" ]] \
-	|| command -v "${c}" &>/dev/null; then
-		return 0
-	else
-		echo "command \"${c}\" not found"
+DEFAULT_KEY_SERVER="https://keyserver.ubuntu.com"
+KEY_SERVER="${KEY_SERVER:-"${DEFAULT_KEY_SERVER}"}"
+URL_PATH="/pks/lookup"
+URL_ARGUMENTS="&fingerprint=on&op=index"
+
+BROWSER_COMMAND="${BROWSER_COMMAND:-"firefox --new-tab"}"
+
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		>&2 echo "no such command \"${1}\""
 		exit 1
 	fi
 }
 
-checkcmd "${BROWSER}"
+function print_version {
+	cat <<-EOF
+		${NAME} ${VERSION}
+		copyright (c) 2021-2023 Daniel Haase
+	EOF
+}
 
-OPT="search=${*// /+}&fingerprint=on&op=vindex"
+function print_usage {
+	print_version
+	cat <<-EOF
 
-if [[ -z "$*" ]]; then
-	eval "${BROWSER} ${SERVER} &>/dev/null &"
-else
-	eval "${BROWSER} '${SERVER}/pks/lookup?${OPT}' &>/dev/null &"
+		usage:  ${NAME} [<query>]
+		        ${NAME} [--version | --help]
+
+		   <query>
+		      query to search key server for
+		      (default key server is "${DEFAULT_KEY_SERVER}")
+
+		   -V | --version
+		      print version information and exit
+
+		   -h | --help
+		      print this usage description and exit
+
+	EOF
+}
+
+check_command "${BROWSER_COMMAND%% *}"
+
+declare url="${KEY_SERVER}"
+declare query=""
+
+if [[ $# -eq 1 ]]; then
+	case "${1}" in
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		-*)
+			print_usage
+			exit 2
+			;;
+		*)
+			query="${1}"
+			;;
+	esac
+elif [[ $# -gt 1 ]]; then
+	query="${*}"
+fi
+
+if [[ -n "${query}" ]]; then
+	url+="${URL_PATH}?search=${query// /+}${URL_ARGUMENTS}"
+fi
+
+if ! eval "${BROWSER_COMMAND} \"${url}\" &>/dev/null &"; then
+	>&2 echo "failed to open browser \"${BROWSER_COMMAND%% *}\""
+	exit 3
 fi
 
 exit 0
