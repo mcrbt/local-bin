@@ -1,7 +1,7 @@
-#!/usr/bin/env -S bash
+#!/usr/bin/env bash
 ##
-## aphwaddr - get MAC address of wireless access point
-## Copyright (C) 2020-2021 Daniel Haase
+## aphwaddr - determine MAC address of wireless access point
+## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,85 +17,145 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-set -euo pipefail
+# shellcheck disable=SC2155,SC2310
 
-#VERSION="0.2.1"
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noclobber
 
-## check if command "$1" is installed
-function checkcmd
-{
-	local c="$1"
-	if [ $# -eq 0 ] || [ -z "${c}" ] \
-	|| command -v "${c}" &> /dev/null; then return 0
-	else echo "command \"${c}\" not found"; exit 1; fi
+NAME="aphwaddr"
+VERSION="0.3.0"
+
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo >&2 "no such command \"${1}\""
+		exit 1
+	fi
 }
 
-checkcmd "awk"
-checkcmd "basename"
-checkcmd "grep"
-checkcmd "head"
-checkcmd "ip"
-checkcmd "iw"
+function print_version {
+	cat <<-EOF
+		${NAME} ${VERSION}
+		copyright (c) 2020-2023 Daniel Haase
+	EOF
+}
 
-if [ $# -eq 0 ]; then iface=""
-elif [ $# -eq 1 ]; then
-	if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
-		echo "usage:  $(basename "$0") [<interface>]"
-		exit 0
-	elif [[ "$1" == "-"* ]]; then
-		echo "usage:  $(basename "$0") [<interface>]"
-		exit 1
-	else iface="$1"; fi
-else
-	echo "usage:  $(basename "$0") [<interface>]"
-	exit 1
-fi
+function print_usage {
+	print_version
+	cat <<-EOF
 
-phy=$(iw dev)
+		usage:  ${NAME} [<interface>]
+		        ${NAME} [--version | --help]
 
-if [ -z "$phy" ]; then
-	echo "no wireless interfaces found"
-	exit 4
-fi
+		   <interface>
+		      wireless network interface to use
+		      (default is first one found)
 
-phy=$(echo "$phy" | awk '/Interface/ {print $2}' | head -n 1)
+		   -V | --version
+		      print version information and exit
 
-if [ -z "$phy" ]; then
-	echo "no wireless interface available"
-	exit 6
-fi
+		   -h | --help
+		      print this usage description and exit
 
-if [ -n "$iface" ]; then
-	iswl=$(iw "$iface" info | awk '/Interface/ {print $2}')
+	EOF
+}
 
-	if [ -z "$iswl" ]; then
-		echo "interface \"$iface\" is not a wireless interface"
-		exit 7
+function fail_usage {
+	print_usage >&2
+	exit 2
+}
+
+function find_default_interface {
+	iw dev |
+		awk '/Interface/ { print $2 }' |
+		head --lines=1
+} 2>/dev/null
+
+function has_interface {
+	local -r interface="${1}"
+
+	if [[ -z "${interface}" ]]; then
+		return 1
 	fi
-else iface="$phy"; fi
 
-if [ -z "$iface" ]; then
-	echo "no wireless interface available"
-	exit 6
-else
-	isup=$(ip link show dev "$iface" | awk '{print $3}' | grep "UP")
+	ip link show dev "${interface}"
+} &>/dev/null
 
-	if [ -z "$isup" ]; then
-		echo "wireless interface \"$iface\" is down"
-		exit 9
+function has_wireless_interface {
+	local -r interface="${1}"
+
+	if [[ -z "${interface}" ]]; then
+		return 1
 	fi
+
+	iw dev "${interface}" info
+} &>/dev/null
+
+function is_interface_up {
+	local -r interface="${1}"
+
+	if [[ -z "${interface}" ]]; then
+		return 1
+	fi
+
+	ip link show dev "${interface}" |
+		grep --max-count=1 --fixed-strings "UP"
+} &>/dev/null
+
+check_command "awk"
+check_command "cat"
+check_command "grep"
+check_command "head"
+check_command "ip"
+check_command "iw"
+
+declare -r default_interface="$(find_default_interface)"
+declare interface="${default_interface}"
+
+if [[ $# -eq 1 ]]; then
+	case "${1}" in
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		-*)
+			fail_usage
+			;;
+		*)
+			interface="${1}"
+			;;
+	esac
+elif [[ $# -gt 1 ]]; then
+	fail_usage
 fi
 
-HWADDR=$(iw dev "$iface" station dump | grep "Station" \
-	| awk '{print $2}')
-
-if [ -n "$HWADDR" ] && [ "$HWADDR" != " " ]; then
-	echo "$HWADDR"
-	exit 0
-else
-	echo "failed to get hardware address of wireless access" \
-		"point on interface $iface"
+if [[ -z "${default_interface}" ]]; then
+	echo >&2 "no wireless interfaces found"
 	exit 3
+fi
+
+if ! has_interface "${interface}"; then
+	echo >&2 "no such interface \"${interface}\""
+	exit 3
+elif ! has_wireless_interface "${interface}"; then
+	echo >&2 "\"${interface}\" is not a wireless interface"
+	exit 3
+fi
+
+if ! is_interface_up "${interface}"; then
+	echo >&2 "wireless interface \"${interface}\" is down"
+	exit 3
+fi
+
+if ! iw dev "${interface}" station dump |
+	awk '/Station/ { print $2 }'; then
+	echo >&2 "operation failed"
+	exit 4
 fi
 
 exit 0
