@@ -27,7 +27,7 @@ use File::Basename;
 binmode STDOUT, ':encoding(UTF-8)' or
     die 'STDOUT does not support UTF-8 encoding';
 
-our $VERSION = v0.2.3;
+our $VERSION = v0.2.4;
 
 my $POWER_SUPPLY_PATH =
     $ENV{'POWER_SUPPLY_PATH'} || '/sys/class/power_supply';
@@ -36,7 +36,7 @@ my $UEVENT_FIELD_PREFIX = 'POWER_SUPPLY_';
 sub trim {
     my ($string) = @_;
 
-    $string =~ s/^\s+|\s+$//gxms;
+    $string =~ s/(^\s+)|(\s+$)//gxms;
     return $string;
 }
 
