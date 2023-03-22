@@ -100,7 +100,7 @@ function is_interface_up {
 	fi
 
 	ip link show dev "${interface}" |
-		grep --max-count=1 --fixed-strings "UP"
+		grep --max-count=1 --fixed-strings "state UP"
 } &>/dev/null
 
 check_command "awk"
