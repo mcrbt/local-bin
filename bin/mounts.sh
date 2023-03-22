@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## mounts - list only the "interesting" file system mounts
+## mounts - list relevant file system mounts, nicely formatted
 ## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@ set -o pipefail
 set -o noclobber
 
 NAME="mounts"
-VERSION="0.3.1"
+VERSION="0.3.2"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
@@ -60,11 +60,11 @@ function print_usage {
 
 function print_mounts {
 	local -r sort_command="${1}"
-	local awkscript="/\/dev\/sd|nvme|mmc/ { "
-	awkscript+="printf \"%-16s   as   %-8s   on   %s\n\", "
-	awkscript+="\$1, \$5, \$3 }"
+	local awk_script="/\/dev\/(sd|nvme|mmc)/ { "
+	awk_script+="printf \"%-16s   as   %-8s   on   %s\n\", "
+	awk_script+="\$1, \$5, \$3 }"
 
-	mount | "${sort_command}" | awk "${awkscript}"
+	mount | "${sort_command}" | awk "${awk_script}"
 } 2>/dev/null
 
 check_command "awk"
