@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##
-## doxystrip - strip documentation and comments from doxygen "Doxyfile"
-## Copyright (C) 2020-2021 Daniel Haase
+## doxystrip - strip documentation and comments from doxygen's "Doxyfile"
+## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,154 +17,298 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
+# shellcheck disable=SC2155,SC2310
+
+## DEPRECATED: initially use "doxygen -s -g Doxyfile" instead
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
 TITLE="doxystrip"
-AUTHOR="Daniel Haase"
-VERSION="0.1.1"
-CRYRS="2020-2021"
+VERSION="0.3.0"
 
-KEEP_SECTION_SEPARATORS=0
-CREATE_BACKUP=1
-file="Doxyfile"
-dupl="Doxyfile.bak"
+DEFAULT_DOXYFILE="${DEFAULT_DOXYFILE:-"Doxyfile"}"
+BACKUP_EXTENSION="${BACKUP_EXTENSION:-"bak"}"
 
-function checkcmd
-{
-	local c="$1"
-	if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
-	which "$c" &> /dev/null
-	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 1; fi
+declare -i keep_sections=0
+declare -i keep_backup=1
+declare -i be_verbose=0
+
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo >&2 "no such command \"${1}\""
+		exit 1
+	fi
+}
+
+function print_version {
+	cat <<-EOF
+		${TITLE} ${VERSION}
+		copyright (c) 2020-2023 Daniel Haase
+	EOF
+}
+
+function print_usage {
+	print_version
+	cat <<-EOF
+
+		usage:  ${TITLE} [-s | -S] [-b | -B] [-v | -q] [<doxyfile>]
+		        ${TITLE} [-V | -h]
+
+		   <doxyfile>
+		      alternative "Doxyfile" filename/location
+		      (default is "./${DEFAULT_DOXYFILE}")
+
+		   -s | --sections
+		      separate distinct configuration sections with extra
+		      comment line
+
+		   -S | --no-sections
+		      do not separate distinct configuration sections with
+		      extra comment line (default)
+
+		   -b | --keep-backup
+		      keep backup of Doxyfile after stripping (default)
+
+		   -B | --no-keep-backup
+		      remove backup of Doxyfile after stripping
+
+		   -v | --verbose | --statistics
+		      print brief statistics of operation and strip rate
+
+		   -q | --quiet
+		      do not print any statistics (default)
+
+		   -V | --version
+		      print version information and exit
+
+		   -h | --help
+		      print this usage description and exit
+
+	EOF
+}
+
+function fail_usage {
+	print_usage >&2
+	exit 2
+}
+
+function assert_doxyfile_exists {
+	local -r file_path="${1}"
+
+	if [[ ! -f "${file_path}" ]]; then
+		echo >&2 "Doxyfile not found"
+		exit 3
+	fi
+
 	return 0
 }
 
-function version
-{
-	echo "$TITLE version $VERSION"
-	echo "copyright (c) $CRYRS $AUTHOR"
-	echo "strip documentation and comments from doxygen's \"Doxyfile\""
+function fail_missing_permission {
+	echo >&2 "missing ${1} permission for directory \"${2}\""
+	exit 3
 }
 
-function usage
-{
-	echo ""
-	version
-	echo ""
-	echo "usage:  $TITLE [-s | -S] [-b | -B] [<doxyfile>]"
-	echo "        $TITLE -V | -h"
-	echo ""
-	echo "  <doxyfile>"
-	echo "    specify alternative Doxyfile filename or prepend a path"
-	echo ""
-	echo "  -s | --sections"
-	echo "    mark configuration sections with a separating line"
-	echo ""
-	echo "  -S | --no-sections"
-	echo "    do not mark configuration sections (default)"
-	echo ""
-	echo "  -b | --backup"
-	echo "    create a backup of the file before stripping it (default)"
-	echo "    the backup file will have the extension \".bak\" or an"
-	echo "    additional timestamp if the file with only the \".bak\""
-	echo "    extension already exists"
-	echo ""
-	echo "  -B | --no-backup"
-	echo "    do not create a backup file"
-	echo ""
-	echo "  -V | --version"
-	echo "    print version information"
-	echo ""
-	echo "  -h | --help"
-	echo "    print this usage information"
-	echo ""
-	echo ""
-	echo "if no arguments are provided, $TITLE looks for a file named"
-	echo "\"Doxyfile\" in the current directory"
-	echo ""
+function assert_required_permissions {
+	local -r file="${1}"
+
+	if [[ ! -f "${file}" ]]; then
+		return 0
+	fi
+
+	local -r directory="$(realpath "$(dirname "${file}")")"
+
+	if [[ ! -r "${directory}" ]]; then
+		fail_missing_permission "read" "${directory}"
+	fi
+
+	if [[ ! -w "${directory}" ]]; then
+		fail_missing_permission "write" "${directory}"
+	fi
+
+	if [[ ! -x "${directory}" ]]; then
+		fail_missing_permission "execute" "${directory}"
+	fi
+
+	return 0
 }
 
-function parse
-{
-	local len=$#
-	if [ $len -eq 0 ]; then return 0; fi
+## TODO: fix
+# function calculate_percentage {
+# 	local -ri share=${1}
+# 	local -ri total=${2}
 
-	for arg in "$@"; do
-		if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-			if [ $len -eq 1 ]; then usage; exit 0
-			else usage; exit 2; fi
-		elif [ "$1" == "-V" ] || [ "$1" == "--version" ]; then
-			if [ $len -eq 1 ]; then version; exit 0
-			else version; exit 2; fi
-		elif [ "$1" == "-s" ] || [ "$1" == "--sections" ]; then
-			KEEP_SECTION_SEPARATORS=1
-		elif [ "$1" == "-S" ] || [ "$1" == "--no-sections" ]; then
-			KEEP_SECTION_SEPARATORS=0
-		elif [ "$1" == "-b" ] || [ "$1" == "--backup" ]; then CREATE_BACKUP=1
-		elif [ "$1" == "-B" ] || [ "$1" == "--no-backup" ]; then CREATE_BACKUP=0
-		elif [[ "$1" != "-"* ]]; then file="$1"
-		else usage; exit 2; fi
-		shift
-	done
+# 	if [[ ${total} -eq 0 ]]; then
+# 		echo "0.0000"
+# 		return 0
+# 	fi
+
+# 	echo "scale=48; ((${share} / ${total}) * 100)" | bc
+# } 2>/dev/null
+
+function print_statistics {
+	local -ri read_line_count="${1}"
+	local -ri written_line_count="${2}"
+
+	if [[ ${be_verbose} -lt 1 ]]; then
+		return 0
+	fi
+
+	local -ri strip_count=$((read_line_count - written_line_count))
+	# local -ri strip_percentage="$(calculate_percentage \
+	#	"${strip_count}" "${read_line_count}")"
+
+	printf "    read %4d lines\n" "${read_line_count}"
+	printf "   wrote %4d lines\n\n" "${written_line_count}"
+	printf "stripped %4d lines (%6.2f %%)\n" "${strip_count}" \
+		"0.0000" # "${strip_percentage}"
+} 2>/dev/null
+
+function process_doxyfile {
+	local -r doxygen_file="${1}"
+	local -r backup_file="${2}"
+
+	if [[ ! -f "${doxygen_file}" ]]; then
+		return 1
+	fi
+
+	local -r comment_regex="#.*"
+
+	local -ri read_line_count="$(wc --lines --total=only \
+		"${backup_file}")"
+	local -i written_line_count=0
+	local previous_line=""
+	IFS=""
+
+	while read -r line; do
+		if [[ -z "${line}" ]]; then
+			continue
+		elif [[ "${line}" == "#-"* &&
+			${keep_sections} -lt 1 ||
+			"${line}" == "${previous_line}" ]]; then
+			continue
+		elif [[ "${line}" =~ ${comment_regex} ]]; then
+			continue
+		fi
+
+		previous_line="${line}"
+		echo "${line}" >>"${doxygen_file}" || return 1
+		written_line_count=$((written_line_count + 1))
+	done <"${backup_file}"
+
+	if ! print_statistics \
+		"${read_line_count}" \
+		"${written_line_count}"; then
+		echo >&2 "failed to print statistics"
+	fi
+
+	return 0
 }
 
-## DEBUG
-#function config
-#{
-#	echo "KEEP_SECTION_SEPARATORS = $KEEP_SECTION_SEPARATORS"
-#	echo "CREATE_BACKUP           = $CREATE_BACKUP"
-#	echo "file                    = $file"
-#	echo "dupl                    = $dupl"
-#	exit 255
-#}
+function revert_operation {
+	local -r doxygen_file="${1}"
+	local -r backup_file="${2}"
 
-if [ $# -eq 1 ]; then parse $@
-elif [ $# -gt 1 ] && [ $# -lt 4 ]; then parse $@
-elif [ $# -ne 0 ]; then usage; exit 2; fi
+	rm --force "${doxygen_file}"
+	mv --force "${backup_file}" "${doxygen_file}"
+} 2>/dev/null
 
-checkcmd "date"
-checkcmd "mv"
-checkcmd "rm"
+check_command "cat"
+check_command "date"
+check_command "mv"
+check_command "pwd"
+check_command "rm"
+check_command "touch"
+check_command "wc"
 
-if [ ! -f "$file" ]; then
-	echo "file \"$file\" not found"
+declare doxygen_file="$(pwd)/${DEFAULT_DOXYFILE}"
+
+while [[ $# -gt 0 ]]; do
+	case "${1}" in
+		-s | --sections)
+			keep_sections=1
+			;;
+		-S | --no-sections)
+			keep_sections=0
+			;;
+		-b | --keep-backup)
+			keep_backup=1
+			;;
+		-B | --no-keep-backup)
+			keep_backup=0
+			;;
+		-v | --verbose | --statistics)
+			be_verbose=1
+			;;
+		-q | --quiet)
+			be_verbose=0
+			;;
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		-*)
+			fail_usage
+			;;
+		*)
+			doxygen_file="${1}"
+			;;
+	esac
+
+	shift
+done
+
+if [[ -d "${doxygen_file}" ]]; then
+	doxygen_file="${doxygen_file}/Doxyfile"
+fi
+
+assert_doxyfile_exists "${doxygen_file}"
+assert_required_permissions "${doxygen_file}"
+
+declare backup_file="${doxygen_file}.${BACKUP_EXTENSION}"
+
+if [[ -f "${backup_file}" ]]; then
+	if ! rm --force "${backup_file}" &>/dev/null; then
+		echo >&2 "failed to removed backup file \"${backup_file}\""
+		exit 3
+	fi
+fi
+
+if ! mv "${doxygen_file}" "${backup_file}" &>/dev/null; then
+	echo >&2 "failed to create backup file \"${backup_file}\""
 	exit 3
 fi
 
-dupl="${file}.bak"
-
-if [ -f "${file}.bak" ]; then
-	stmp=$(date +%s)
-	dupl="${file}.bak.${stmp}"
-fi
-
-## DEBUG
-#config
-
-mv "$file" "$dupl" &> /dev/null
-if [ $? -ne 0 ]; then
-	if [ $CREATE_BACKUP -eq 0 ]; then echo "opertion failed"
-	else echo "failed to create backup file \"$dupl\""; fi
+if ! touch "${doxygen_file}" &>/dev/null; then
+	echo >&2 "operation failed"
 	exit 4
 fi
 
-echo -n "" > "$file"
+echo "DEBUG: verbose = ${be_verbose}"
 
-last=""
-IFS=
-while read -r line; do
-	if [ -z "$line" ]; then continue; fi
-	if [ "$line" == "#" ]; then continue; fi
-	if [[ "$line" == "# "* ]]; then continue; fi
-	if [[ "$line" == "#-"* ]]; then
-		if [ $KEEP_SECTION_SEPARATORS -gt 0 ]; then
-			if [ "$line" == "$last" ]; then continue; fi
-		else continue; fi
+if ! process_doxyfile "${doxygen_file}" "${backup_file}"; then
+	echo >&2 "operation failed"
+
+	echo "DEBUG: reverting operation..."
+
+	if ! revert_operation "${doxygen_file}" "${backup_file}"; then
+		echo >&2 "failed to revert operation"
+		exit 5
 	fi
 
-	last="$line"
-	echo "$line" >> "$file"
-done < "$dupl"
+	exit 4
+fi
 
-if [ $CREATE_BACKUP -eq 0 ]; then
-	rm -f "$dupl"
+if [[ ${keep_backup} -lt 1 ]]; then
+	if ! rm --force "${backup_file}" &>/dev/null; then
+		echo >&2 "failed to remove backup file \"${backup_file}\""
+		exit 3
+	fi
 fi
 
 exit 0
