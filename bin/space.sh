@@ -65,7 +65,7 @@ function print_space {
 
 	df --human-readable --local --output=source,avail,target |
 		grep --perl-regexp "${expression}" |
-		awk '{print $1" "$0}' |
+		awk '{ print $1" "$0 }' |
 		sed --expression="s/\(${columns_4}\)\/\$/\1 [root]/g" \
 			--expression="s/\/home\$/ [home]/" \
 			--expression="s/\/\(boot\)\|\(efi\).*\$/ [boot]/" \
