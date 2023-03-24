@@ -64,9 +64,7 @@ function find_subdirectory_by_regex {
 	local -r parent_directory="${1}"
 	local -r regex="${1}"
 
-	if [[ -z "${parent_directory}" ||
-		! -d "${parent_directory}" ||
-		-z "${regex}" ]]; then
+	if [[ ! -d "${parent_directory}" || -z "${regex}" ]]; then
 		return 1
 	fi
 
@@ -92,7 +90,7 @@ function find_picture_directory {
 		return 0
 	fi
 
-	if [[ -z "${HOME}" || ! -d "${HOME}" ]]; then
+	if [[ ! -d "${HOME}" ]]; then
 		return 1
 	fi
 
@@ -111,8 +109,7 @@ function find_screenshot_directory {
 	local picture_directory="$(find_picture_directory)"
 	local directory
 
-	if [[ -z "${picture_directory}" ||
-		! -d "${picture_directory}" ]]; then
+	if [[ ! -d "${picture_directory}" ]]; then
 		return 1
 	fi
 
@@ -122,7 +119,7 @@ function find_screenshot_directory {
 function find_latest_screenshot {
 	local -r directory="${1}"
 
-	if [[ -z "${directory}" || ! -d "${directory}" ]]; then
+	if [[ ! -d "${directory}" ]]; then
 		return 1
 	fi
 
@@ -132,7 +129,7 @@ function find_latest_screenshot {
 function get_file_birth {
 	local -r filepath="${1}"
 
-	if [[ -z "${filepath}" || ! -f "${filepath}" ]]; then
+	if [[ ! -f "${filepath}" ]]; then
 		return 1
 	fi
 
