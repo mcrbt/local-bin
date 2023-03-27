@@ -110,7 +110,7 @@ check_command "pacman"
 check_command "reflector"
 check_command "rm"
 
-reflector \
+if ! reflector \
 	--threads 4 \
 	--connection-timeout 7 \
 	--protocol "https" \
@@ -120,7 +120,10 @@ reflector \
 	--fastest "${MAX_SERVERS}" \
 	--sort "score" \
 	--save "${MIRROR_FILE}" \
-	&>/dev/null
+	&>/dev/null; then
+	echo >&2 "operation failed"
+	exit 4
+fi
 
 if [[ -f "${MIRROR_FILE}" && -s "${MIRROR_FILE}" ]]; then
 	count=$(grep --count 'Server = ' "${MIRROR_FILE}")
