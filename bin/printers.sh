@@ -1,7 +1,7 @@
-#!/usr/bin/env -S bash
+#!/usr/bin/env bash
 ##
 ## printers - list network printers and their IP address
-## Copyright (C) 2021 Daniel Haase
+## Copyright (C) 2021-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,55 +17,117 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-#VERSION="0.1.1"
-VERBOSE=1
+# shellcheck disable=SC2155
 
-set -euo pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noclobber
 
-function checkcmd
-{
-	local c="${1%% *}"
-	if [ $# -eq 0 ] || [ -z "${c}" ] \
-	|| command -v "${c}" &> /dev/null; then return 0
-	else echo "command \"${c}\" not found"; exit 1; fi
+NAME="printers"
+VERSION="0.2.0"
+
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo >&2 "no such command \"${1}\""
+		exit 1
+	fi
 }
 
-checkcmd "cut"
-checkcmd "lpstat"
-checkcmd "wc"
+function print_version {
+	cat <<-EOF
+		${NAME} ${VERSION}
+		copyright (c) 2021-2023 Daniel Haase
+	EOF
+}
 
-CUPS=$(lpstat -r)
+function print_usage {
+	print_version
+	cat <<-EOF
 
-if [ -z "${CUPS}" ] \
-|| [ "${CUPS}" != "scheduler is running" ]; then
-	echo "CUPS server not running"
-	exit 1
+		usage:  ${NAME} [--verbose | --quiet]
+		        ${NAME} [--version | --help]
+
+		   -v | --verbose
+		      be a little bit more chatty (default)
+
+		   -q | --quiet
+		      only print relevant output, if any
+
+		   -V | --version
+		      print version information and exit
+
+		   -h | --help
+		      print this usage description and exit
+
+	EOF
+}
+
+check_command "cat"
+check_command "cut"
+check_command "lpstat"
+check_command "wc"
+
+declare -i verbose=1
+
+if [[ $# -eq 1 ]]; then
+	case "${1}" in
+		-v | --verbose)
+			verbose=1
+			;;
+		-q | --quiet)
+			verbose=0
+			;;
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		*)
+			print_usage
+			exit 2
+			;;
+	esac
+elif [[ $# -gt 1 ]]; then
+	print_usage
+	exit 2
 fi
 
-COUNT=$(lpstat -e | wc -l)
+declare -r status="$(lpstat -r)"
 
-if [ -z "${COUNT}" ] || [ "$COUNT" -lt 2 ]; then
-	if [[ "$(lpstat -e)" == "no "* ]]; then
-		if [ "$VERBOSE" -gt 0 ]; then
-			echo "no printers found"
-		fi
+if [[ "${status,,}" != "scheduler is running" ]]; then
+	echo >&2 "CUPS server not running"
+	exit 2
+fi
 
-		exit 0
+declare -ri printer_count="$(lpstat -e 2>/dev/null | wc --lines)"
+
+if [[ ${printer_count} -lt 1 ]]; then
+	echo >&2 "no printers found"
+	exit 0
+fi
+
+if [[ ${verbose} -gt 0 ]]; then
+	declare -r indent="   "
+
+	if [[ ${printer_count} -eq 1 ]]; then
+		echo "found 1 printer:"
+	else
+		echo "found ${printer_count} printers:"
 	fi
 fi
 
-if [ "$VERBOSE" -gt 0 ]; then
-	INDENT="  "
-
-	if [ "$COUNT" -eq 1 ]; then
-		echo "found ${COUNT} printer:"
-	else echo "found ${COUNT} printers:"; fi
-fi
+declare name
+declare address
 
 while read -r printer; do
-	name=$(echo "${printer}" | cut -d ' ' -f 3)
-	addr=$(echo "${printer}" | cut -d ' ' -f 4)
-	echo "${INDENT:-""}${name:0:-1} at ${addr#*:\/\/}"
-done <<< "$(lpstat -v)"
+	name="$(echo "${printer}" | cut --delimiter=" " --fields=3)"
+	address="$(echo "${printer}" | cut --delimiter=" " --fields=4)"
+
+	echo "${indent:-""}${name:0:-1} at ${address#*:\/\/}"
+done <<<"$(lpstat -v)"
 
 exit 0
