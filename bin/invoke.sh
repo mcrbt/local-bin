@@ -23,7 +23,7 @@ set -o pipefail
 set -o noclobber
 
 NAME="invoke"
-VERSION="4.2.0"
+VERSION="4.2.1"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
@@ -58,6 +58,7 @@ function print_usage {
 	EOF
 }
 
+check_command "basename"
 check_command "cat"
 check_command "nohup"
 
@@ -79,7 +80,7 @@ if [[ $# -eq 1 ]]; then
 	esac
 fi
 
-while [[ $# -gt 0 && "${1}" == "${0}" ]]; do
+while [[ $# -gt 0 && "${1}" == "$(basename "${0}")" ]]; do
 	shift
 done
 
