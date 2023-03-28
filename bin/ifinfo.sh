@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ##
-## ifinfo - get ip addresses registered for default network interface
+## ifinfo - list IP addresses registered for a network interface
 ## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ set -o pipefail
 set -o noclobber
 
 NAME="ifinfo"
-VERSION="0.3.0"
+VERSION="0.3.2"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
@@ -61,16 +61,32 @@ function print_usage {
 }
 
 function is_interface_up {
-	local -r address_info="${1}"
+	local -r interface="${1}"
 
-	echo "${address_info}" |
+	if [[ -z "${interface}" ]]; then
+		return 1
+	fi
+
+	ip link show dev "${interface}" |
 		grep --max-count=1 --fixed-strings "state UP"
+} &>/dev/null
+
+function is_wireless_interface {
+	local -r interface="${1}"
+
+	if [[ -z "${interface}" ]]; then
+		return 1
+	fi
+
+	iw dev "${interface}" info
 } &>/dev/null
 
 check_command "awk"
 check_command "cat"
+check_command "grep"
 check_command "head"
 check_command "ip"
+check_command "iw"
 check_command "wc"
 
 declare interface=""
@@ -104,7 +120,7 @@ default_interface="$(ip route 2>/dev/null |
 	awk '/^default/ { print $5 }' |
 	head --lines=1)" || {
 	echo >&2 "default network interface not found"
-	exit 2
+	exit 3
 }
 interface="${interface:-"${default_interface}"}"
 
@@ -112,12 +128,20 @@ declare address_info
 
 address_info="$(ip address show dev "${interface}" 2>/dev/null)" || {
 	echo >&2 "no such interface \"${interface}\""
-	exit 3
+	exit 4
 }
 
-if ! is_interface_up "${address_info}"; then
+if ! is_interface_up "${interface}"; then
 	echo >&2 "interface \"${interface}\" is down"
-	exit 2
+	exit 3
+fi
+
+declare interface_type
+
+if is_wireless_interface "${interface}"; then
+	interface_type="wireless"
+else
+	interface_type="wired"
 fi
 
 declare mac_address
@@ -130,7 +154,10 @@ ip6_count="$(echo "${address_info}" | grep --count --fixed-strings 'inet6')"
 
 cat <<-EOF
 
-	interface ${interface} (${mac_address})
+	interface ${interface} (${interface_type})
+
+	mac:
+	    ${mac_address}
 EOF
 
 if [[ ${ip4_count} -gt 0 ]]; then
