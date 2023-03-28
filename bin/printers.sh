@@ -66,6 +66,7 @@ function print_usage {
 check_command "cat"
 check_command "cut"
 check_command "lpstat"
+check_command "printf"
 check_command "wc"
 
 declare -i verbose=1
@@ -99,19 +100,22 @@ fi
 declare -r status="$(lpstat -r)"
 
 if [[ "${status,,}" != "scheduler is running" ]]; then
-	echo >&2 "CUPS server not running"
+	echo >&2 "CUPS service not running"
 	exit 2
 fi
 
 declare -ri printer_count="$(lpstat -e 2>/dev/null | wc --lines)"
 
 if [[ ${printer_count} -lt 1 ]]; then
-	echo >&2 "no printers found"
+	if [[ ${verbose} -gt 0 ]]; then
+		echo "no printers found"
+	fi
+
 	exit 0
 fi
 
 if [[ ${verbose} -gt 0 ]]; then
-	declare -r indent="   "
+	declare -r indent="    "
 
 	if [[ ${printer_count} -eq 1 ]]; then
 		echo "found 1 printer:"
@@ -127,7 +131,7 @@ while read -r printer; do
 	name="$(echo "${printer}" | cut --delimiter=" " --fields=3)"
 	address="$(echo "${printer}" | cut --delimiter=" " --fields=4)"
 
-	echo "${indent:-""}${name:0:-1} at ${address#*:\/\/}"
+	printf "%s%-15s    %s\n" "${indent:-""}" "${address#*:\/\/}" "${name:0:-1}"
 done <<<"$(lpstat -v)"
 
 exit 0
