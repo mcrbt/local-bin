@@ -155,6 +155,7 @@ if [[ $# -eq 1 ]]; then
 		*)
 			print_usage
 			exit 2
+			;;
 	esac
 elif [[ $# -gt 1 ]]; then
 	print_usage
