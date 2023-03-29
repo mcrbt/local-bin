@@ -124,9 +124,9 @@ The collection currently contains the following **27 scripts**:
   * most useful for software with graphical user interface, to detach
     the background task from the current shell
 
-* [**`ipstat.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/ipstat.sh)
+* [**`ipinfo.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/ipinfo.sh)
   * print active network interface, private IP address (LAN),
-    public IP address (WAN), and TOR exit node IP address, if any
+    public IP address (WAN), and Tor exit relay IP address, if any
   * depends on `systemd` init system
 
 * [**`manline.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/manline.sh)
@@ -181,7 +181,7 @@ The collection currently contains the following **27 scripts**:
   * wrapper around [`df`](https://github.com/coreutils/coreutils/blob/master/src/df.c)
 
 * [**`torcircuit.sh`**](https://github.com/mcrbt/local-bin/blob/master/bin/torcircuit.sh)
-  * open a new *TOR* circuit by restarting the `tor` service
+  * open a new *Tor* circuit by restarting the `tor` service
   * it is supposed, that the `tor` daemon is already running
   * when done, the old, as well as the new exit node IP address is printed
   * depends on *Arch Linux*'s *init system*, `systemd`, for managing `tor` service
