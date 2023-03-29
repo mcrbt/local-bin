@@ -25,7 +25,7 @@ set -o pipefail
 set -o noclobber
 
 NAME="ipinfo"
-VERSION="0.2.1"
+VERSION="0.2.3"
 
 SOCKS_PROXY="${SOCKS_PROXY:-"localhost:9050"}"
 IP_LOOKUP_URL="${IP_LOOKUP_URL:-"https://api.ipify.org"}"
@@ -48,11 +48,7 @@ function print_usage {
 	print_version
 	cat <<-EOF
 
-		usage:  ${NAME} [<interface>]
-		        ${NAME} [--version | --help]
-
-		   <interface>
-		      network interface to print information about
+		usage:  ${NAME} [--version | --help]
 
 		   -V | --version
 		      print version information and exit
@@ -92,7 +88,7 @@ function get_lan_address {
 	fi
 
 	ip route show dev "${interface}" |
-		awk '/link/ { print $7 }'
+		awk '/scope link/ { print $7 }'
 } 2>/dev/null
 
 function get_wan_address {
