@@ -25,7 +25,7 @@ set -o pipefail
 set -o noclobber
 
 NAME="ifinfo"
-VERSION="0.3.2"
+VERSION="0.3.3"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
@@ -69,6 +69,18 @@ function is_interface_up {
 
 	ip link show dev "${interface}" |
 		grep --max-count=1 --fixed-strings "state UP"
+} &>/dev/null
+
+function has_interface_carrier {
+	local -r interface="${1}"
+
+	if [[ -z "${interface}" ]]; then
+		return 1
+	fi
+
+	ip link show dev "${interface}" |
+		head --lines=1 |
+		grep --max-count=1 --fixed-strings --invert-match "NO-CARRIER"
 } &>/dev/null
 
 function is_wireless_interface {
@@ -130,6 +142,11 @@ address_info="$(ip address show dev "${interface}" 2>/dev/null)" || {
 	echo >&2 "no such interface \"${interface}\""
 	exit 4
 }
+
+if ! has_interface_carrier "${interface}"; then
+	echo >&2 "interface \"${interface}\" has no carrier"
+	exit 3
+fi
 
 if ! is_interface_up "${interface}"; then
 	echo >&2 "interface \"${interface}\" is down"
