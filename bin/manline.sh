@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##
 ## manline - open manual pages online at https://www.man7.org
-## Copyright (C) 2020 Daniel Haase
+## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,81 +17,134 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-TITLE="manline"
-AUTHOR="Daniel Haase"
-CRYEARS="2020"
-COPYRIGHT="copyright (c) $CRYEARS $AUTHOR"
-VERSION="0.2.0"
-CALL="$0"
+# shellcheck disable=SC2310
 
-function checkcmd
-{
-	local c="$1"
-	if [ $# -eq 0 ] || [ -z "$c" ]; then return 0; fi
-	which "$c" &> /dev/null
-	if [ $? -ne 0 ]; then echo "command \"$c\" not found"; exit 1; fi
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noclobber
+
+TITLE="manline"
+VERSION="0.3.0"
+
+BROWSER_COMMAND="${BROWSER_COMMAND:-"firefox --new-tab"}"
+MANUAL_DOMAIN="https://www.man7.org"
+DEFAULT_SECTION="1"
+
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo >&2 "no such command \"${1}\""
+		exit 1
+	fi
+}
+
+function print_version {
+	cat <<-EOF
+		${TITLE} ${VERSION}
+		copyright (c) 2020-2023 Daniel Haase
+	EOF
+}
+
+function print_usage {
+	print_version
+	cat <<-EOF
+
+		usage:  ${TITLE} [<section>] <page>
+		        ${TITLE} [--version | --help]
+
+		   <section>
+		      manual page section (1-8, L, N)
+		      (default 1: \"user commands\")
+
+		   <page>
+		      manual page to open
+		      (name of command, system call, ...)
+
+		   -V | --version
+		      print version information and exit
+
+		   -h | --help
+		      print this usage description and exit
+
+	EOF
+}
+
+function fail_usage {
+	print_usage
+	exit 2
+}
+
+function is_valid_section {
+	local -r regex="^[1-8LN]\$"
+
+	if [[ "${1}" =~ ${regex} ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
+function is_valid_page {
+	if [[ -z "${1}" || "${1}" == "-"* ]]; then
+		return 1
+	fi
+
 	return 0
 }
 
-function print_version
-{
-	if [ -z "$TITLE" ]; then TITLE="$(basename $CALL)"; fi
-	echo "$TITLE version $VERSION"
-	echo " - open manual pages online at https://www.man7.org"
-	echo "$COPYRIGHT"
-}
+declare -r command_name="${BROWSER_COMMAND%% *}"
+declare expanded_command
 
-function print_usage
-{
-	if [ -z "$TITLE" ]; then TITLE="$(basename $CALL)"; fi
-	print_version
-	echo ""
-	echo "show Linux manual pages online under <https://www.man7.org>"
-	echo "for man pages not installed locally"
-	echo ""
-	echo "usage:  $TITLE [<section>] <page>"
-	echo "        $TITLE [-V | -h]"
-	echo ""
-	echo "  <section>"
-	echo "    the manual page section (1-8, L, N)"
-	echo "    (optional, defaults to 1 - \"user commands\")"
-	echo ""
-	echo "  <page>"
-	echo "    the manual page (name of command, system call, ...)"
-	echo ""
-	echo "  -V | --version"
-	echo "    print version information"
-	echo ""
-	echo "  -h | --help"
-	echo "    print this help message"
-	echo ""
-}
+check_command "${command_name}"
 
-checkcmd "basename"
-checkcmd "firefox"
+expanded_command="$(command -v "${command_name}") "
+expanded_command+="${BROWSER_COMMAND/#${command_name} /}"
 
-if [ $# -eq 2 ]; then SC="$1"; PG="$2"
-elif [ $# -eq 1 ]; then
-	if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-		print_usage; exit 0
-	elif [ "$1" == "-V" ] || [ "$1" == "--version" ]; then
-		print_version; exit 0
-	else SC="1"; PG="$1"; fi
-elif [ $# -eq 0 ]; then print_usage; exit 0
-else print_usage; exit 2; fi
+declare section="${DEFAULT_SECTION}"
+declare page
 
-if [ -z "$PG" ] || [[ "$PG" == "-"* ]]; then
-	echo "invalid manual page \"$PG\""
-	exit 2
+if [[ $# -eq 0 ]]; then
+	fail_usage
+elif [[ $# -eq 1 ]]; then
+	case "${1}" in
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		*)
+			page="${1}"
+			;;
+	esac
+elif [[ $# -eq 2 ]]; then
+	section="${1}"
+	page="${2}"
+else
+	fail_usage
 fi
 
-if [ -z "$SC" ]; then SC=1
-elif [[ "$SC" == "-"* ]]; then
-	echo "invalid manual section \"$SC\""
-	exit 2
+if ! is_valid_page "${page}"; then
+	echo >&2 "invalid manual page \"${page}\""
+	exit 3
 fi
 
-firefox "https://www.man7.org/linux/man-pages/man${SC}/${PG}.${SC}.html" &> /dev/null &
-if [ $? -ne 0 ]; then echo "failed to open manual page of \"$PG\""; exit 3; fi
+if ! is_valid_section "${section}"; then
+	echo >&2 "invalid manual section \"${section}\""
+	exit 3
+fi
+
+declare url="${MANUAL_DOMAIN}/linux/man-pages/"
+url+="man${section}/${page}.${section}.html"
+
+if ! eval "${expanded_command} ${url} &>/dev/null &"; then
+	declare message="failed to open browser \"${command_name}\" "
+	message+="with manual page \"${page}\""
+
+	echo >&2 "${message}"
+	exit 4
+fi
 
 exit 0
