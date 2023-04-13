@@ -101,8 +101,6 @@ function assert_doxyfile_exists {
 		echo >&2 "Doxyfile not found"
 		exit 3
 	fi
-
-	return 0
 }
 
 function fail_missing_permission {
@@ -130,8 +128,6 @@ function assert_required_permissions {
 	if [[ ! -x "${directory}" ]]; then
 		fail_missing_permission "execute" "${directory}"
 	fi
-
-	return 0
 }
 
 ## TODO: fix
@@ -202,8 +198,6 @@ function process_doxyfile {
 		"${written_line_count}"; then
 		echo >&2 "failed to print statistics"
 	fi
-
-	return 0
 }
 
 function revert_operation {
