@@ -66,10 +66,11 @@ function print_usage {
 	EOF
 }
 
-check_command "${BROWSER_COMMAND%% *}"
-
+declare -r command_name="${BROWSER_COMMAND%% *}"
 declare url="${KEY_SERVER}"
 declare query=""
+
+check_command "${command_name}"
 
 if [[ $# -eq 1 ]]; then
 	case "${1}" in
@@ -98,7 +99,7 @@ if [[ -n "${query}" ]]; then
 fi
 
 if ! eval "${BROWSER_COMMAND} \"${url}\" &>/dev/null &"; then
-	echo >&2 "failed to open browser \"${BROWSER_COMMAND%% *}\""
+	echo >&2 "failed to open browser \"${command_name}\""
 	exit 3
 fi
 
