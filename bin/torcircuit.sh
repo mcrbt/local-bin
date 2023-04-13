@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##
-## torcircuit - open a new TOR circuit
-## Copyright (C) 2020-2021 Daniel Haase
+## torcircuit - open new Tor circuit by restarting services
+## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -18,120 +18,166 @@
 ## <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
-## script title
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noclobber
+
 TITLE="torcircuit"
-## script version
-VERSION="0.3.1"
+VERSION="0.4.0"
 
-## test if command "$1" is installed; exit otherwise
-function checkcmd
-{
-	local c="$1"
-	if [ $# -eq 0 ] || [ -z "$c" ]; then return 1; fi
-	which "$c" &> /dev/null
-	if [ $? -eq 0 ]; then return 0
-	else echo "command \"$c\" not found"; exit 1; fi
-}
+SOCKS_PROXY="${SOCKS_PROXY:-"localhost:9050"}"
+IP_LOOKUP_URL="${IP_LOOKUP_URL:-"https://api.ipify.org"}"
 
-## print version and copyright notice
-function version
-{
-	echo "$TITLE version $VERSION"
-	echo "copyright (c) 2020 Daniel Haase"
-}
-
-## print a brief usage description
-function usage
-{
-	echo ""
-	echo "open a new TOR circuit"
-	echo ""
-	echo "  usage: $TITLE [-h | -V]"
-	echo ""
-	echo "  -h | --help"
-	echo "     print this usage description and exit"
-	echo ""
-	echo "  -V | --version"
-	echo "     print version and copyright notice and exit"
-	echo ""
-}
-
-## check dependencies
-checkcmd "awk"
-checkcmd "curl"
-checkcmd "grep"
-checkcmd "ip"
-checkcmd "ps"
-checkcmd "systemctl"
-checkcmd "tor"
-
-## parse command line arguments
-if [ $# -ge 1 ]; then
-	if [ "$1" == "-V" ] || [ "$1" == "--version" ]; then
-		version; exit 0
-	elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-		version; usage; exit 0
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo >&2 "no such command \"${1}\""
+		exit 1
 	fi
-fi
+}
 
-## test for an active network connection
-if [ -z "$(ip route)" ]; then
-	echo "no network connection detected"
-	exit 2
-fi
+function print_version {
+	cat <<-EOF
+		${TITLE} ${VERSION}
+		copyright (c) 2020-2023 Daniel Haase
+	EOF
+}
 
-## test whether TOR daemon is running
-if [ -z "$(ps -e | grep tor)" ]; then
-	echo "tor daemon not running"
-	exit 2
-fi
+function print_usage {
+	print_version
+	cat <<-EOF
 
-## test whether TOR service is active and running
-ACTIVE=$(systemctl status tor | awk '/Active/ {print $2" "$3}')
-if [ "$ACTIVE" != "active (running)" ]; then
-	echo "tor service not running"
-	exit 2
-fi
+		usage:  ${TITLE} [--version | --help]
 
-## test whether there had been a previous TOR circuit
-ESTABL=$(systemctl status tor | grep 'Bootstrapped 100% (done): Done')
-if [ -z "${ESTABL}" ]; then
-	echo "no previous tor circuit established"
-	TOR_OLD="none"
-else
-	## get old TOR exit node IP address by querying ipinfo.io through TOR
-	TOR_OLD=$(curl --proxy socks5://localhost:9050 --connect-timeout 5 --silent ipinfo.io/ip)
-	if [ $? -ne 0 ]; then
-		echo "failed to get old tor exit node ip address"
+		   -V | --version
+		      print version information and exit
+
+		   -h | --help
+		      print this usage description and exit
+
+	EOF
+}
+
+function has_network_connection {
+	[[ -n "$(ip route)" ]]
+} &>/dev/null
+
+function has_tor_instance {
+	pgrep '^tor$'
+} &>/dev/null
+
+function is_tor_running {
+	[[ "$(systemctl status tor |
+		awk '/Active/ { print $2" "$3 }')" == "active (running)" ]]
+} &>/dev/null
+
+function is_circuit_established {
+	systemctl status tor |
+		grep --max-count=1 --fixed-strings --quiet \
+			"Bootstrapped 100% (done): Done"
+} &>/dev/null
+
+function get_tor_address {
+	local proxy_url
+
+	if [[ "${SOCKS_PROXY}" != "socks5://"* ]]; then
+		proxy_url="socks5://${SOCKS_PROXY}"
+	else
+		proxy_url="${SOCKS_PROXY}"
 	fi
-fi
 
-## restart TOR service
-systemctl restart tor &> /dev/null
-if [ $? -ne 0 ]; then
-	echo "failed to open new tor circuit"
+	curl --proxy "${proxy_url}" --connect-timeout 5 --silent \
+		"${IP_LOOKUP_URL}"
+} 2>/dev/null
+
+function restart_tor_service {
+	systemctl restart tor &>/dev/null || {
+		echo >&2 "failed to open new tor circuit"
+		exit 3
+	}
+
+	sleep 5
+}
+
+check_command "awk"
+check_command "cat"
+check_command "curl"
+check_command "grep"
+check_command "ip"
+check_command "pgrep"
+check_command "systemctl"
+check_command "tor"
+
+if [[ $# -eq 1 ]]; then
+	case "${1}" in
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		*)
+			print_usage
+			exit 2
+			;;
+	esac
+elif [[ $# -gt 1 ]]; then
+	print_usage
 	exit 2
 fi
 
-## wait until new TOR circuit is established
-sleep 5
-
-## test whether a new TOR circuit could be established successfully
-ESTABL=$(systemctl status tor | grep 'Bootstrapped 100% (done): Done')
-if [ -z "${ESTABL}" ]; then
-	echo "failed to establish new tor circuit in time"
-	TOR_NEW="none"
-	RCODE=3
-else
-	## get new TOR exit node IP address by querying ipinfo.io through TOR
-	TOR_NEW=$(curl --proxy socks5://localhost:9050 --connect-timeout 5 --silent ipinfo.io/ip)
-	if [ $? -ne 0 ]; then
-		echo "failed to get new tor exit node ip address"
-		RCODE=3
-	else RCODE=0; fi
+if ! has_network_connection; then
+	echo >&2 "no network connection detected"
+	exit 3
 fi
 
-## print old and new public IP addresses
-echo "old exit node ip: $TOR_OLD"
-echo "new exit node ip: $TOR_NEW"
-exit $RCODE
+if ! has_tor_instance; then
+	echo >&2 "no running tor daemon detected"
+	#exit 3
+fi
+
+if ! is_tor_running; then
+	echo >&2 "tor service not running"
+	#exit 3
+fi
+
+declare old_address
+declare new_address
+declare -i exit_code
+
+if is_circuit_established; then
+	old_address="$(get_tor_address)" || {
+		echo >&2 "failed to get old tor exit relay ip address"
+	}
+else
+	echo >&2 "no previous tor circuit established"
+	old_address="none"
+fi
+
+restart_tor_service
+
+if is_circuit_established; then
+	exit_code=0
+	new_address="$(get_tor_address)" || {
+		echo >&2 "failed to get new tor exit relay ip address"
+		new_address="none"
+		exit_code=4
+	}
+else
+	echo >&2 "failed to establish new tor circuit in time"
+	new_address="none"
+	exit_code=5
+fi
+
+cat <<-EOF
+
+	tor exit relay ip address:
+
+	   old: ${old_address}
+	   new: ${new_address}
+
+EOF
+
+exit "${exit_code}"
