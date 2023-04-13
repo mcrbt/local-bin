@@ -145,11 +145,7 @@ function get_file_birth {
 }
 
 function is_today {
-	if [[ "${1}" == "$(date +%Y-%m-%d)" ]]; then
-		return 0
-	else
-		return 1
-	fi
+	[[ "${1}" == "$(date +%Y-%m-%d)" ]]
 }
 
 function confirm_deletion {
@@ -159,16 +155,12 @@ function confirm_deletion {
 	echo -n "delete \"${filepath}\"? (Y/n) "
 	read -r choice
 
-	if [[ "${choice,,}" == "y"* ]]; then
-		return 0
-	fi
-
-	return 1
+	[[ "${choice,,}" == "y"* ]]
 }
 
-check_command "date"
 check_command "cat"
 check_command "cut"
+check_command "date"
 check_command "head"
 check_command "ls"
 check_command "rm"

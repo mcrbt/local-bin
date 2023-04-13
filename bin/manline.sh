@@ -77,19 +77,11 @@ function fail_usage {
 function is_valid_section {
 	local -r regex="^[1-8LN]\$"
 
-	if [[ "${1}" =~ ${regex} ]]; then
-		return 0
-	fi
-
-	return 1
+	[[ "${1}" =~ ${regex} ]]
 }
 
 function is_valid_page {
-	if [[ -z "${1}" || "${1}" == "-"* ]]; then
-		return 1
-	fi
-
-	return 0
+	[[ -n "${1}" && "${1}" != "-"* ]]
 }
 
 declare -r command_name="${BROWSER_COMMAND%% *}"

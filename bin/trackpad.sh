@@ -118,11 +118,7 @@ function set_input_device {
 }
 
 function has_mouse {
-	if [[ -n "$(get_input_device "Mouse")" ]]; then
-		return 0
-	else
-		return 1
-	fi
+	[[ -n "$(get_input_device "Mouse")" ]]
 }
 
 function disable_input_device {

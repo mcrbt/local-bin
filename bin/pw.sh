@@ -75,14 +75,9 @@ function fail_usage {
 }
 
 function is_number {
-	declare -r argument="${1}"
 	declare -r number_regex="^[0-9]+$"
 
-	if [[ "${argument}" =~ ${number_regex} ]]; then
-		return 0
-	else
-		return 1
-	fi
+	[[ "${1}" =~ ${number_regex} ]]
 }
 
 check_command "pwgen"
