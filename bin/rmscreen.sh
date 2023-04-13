@@ -149,13 +149,18 @@ function is_today {
 }
 
 function confirm_deletion {
-	local -r filepath="${1}"
+	local prompt="delete \"${1}\"?"
 	local choice
 
-	echo -n "delete \"${filepath}\"? (Y/n) "
-	read -r choice
+	read -r -n 1 -s -p "${prompt} (Y/n) " choice
 
-	[[ "${choice,,}" == "y"* ]]
+	if [[ "${choice,,}" == "n"* ]]; then
+		echo >&2 "n"
+		return 1
+	else
+		echo >&2 "y"
+		return 0
+	fi
 }
 
 check_command "cat"
