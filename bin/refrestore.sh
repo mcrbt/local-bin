@@ -106,7 +106,7 @@ function open_link_files {
 
 	for file in "${directory}/"*.{href,url}; do
 		if [[ -f "${file}" ]]; then
-			open_link "$(< "${file}")"
+			open_link "$(<"${file}")"
 		fi
 	done
 }
