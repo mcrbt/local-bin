@@ -1,7 +1,7 @@
-#!/usr/bin/env -S bash
+#!/usr/bin/env bash
 ##
 ## cfgsync - copy configuration files of root to all local user directories
-## Copyright (C) 2020-2021 Daniel Haase
+## Copyright (C) 2020-2023  Daniel Haase
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,137 +17,262 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/gpl.txt>.
 ##
 
+set -o errexit
+set -o nounset
+set -o pipefail
+
 TITLE="cfgsync"
-VERSION="0.2.3"
-AUTHOR="Daniel Haase"
+VERSION="0.4.0"
 
-APP="$0"
-synct=0
+declare -r ROOT_PREFIX="${ROOT_PREFIX:-"/root"}"
+declare -r HOME_PREFIX="${HOME_PREFIX:-"/home"}"
+declare -r -a DEFAULT_SYNCHRONIZATION_LIST=(
+	".bashrc"
+	".xinitrc"
+)
 
-## CONFIGURATION SECTION
-
-## default list of configuration files to synchronize
-## these files are synchronized if no files are provided via command line
-SYNC_LIST=".bashrc .xinitrc"
-
-## set to 1 to omit most output
-QUIET=0
-
-## END CONFIGURATION SECTION
-
-
-function version
-{
-	echo "$TITLE version $VERSION"
-	echo " - copy configuration files of root to all users"
-	echo "copyright (c) 2020-2021 $AUTHOR"
+function check_command {
+	if ! command -v "${1}" &>/dev/null; then
+		echo >&2 "no such command \"${1}\""
+		exit 1
+	fi
 }
 
-function usage
-{
-	version
-	echo ""
-	echo "usage:  $APP [<filename1> [<filename2> [...]]]"
-	echo "        $APP [--version | --help]"
-	echo ""
-	echo "  <filenameN>"
-	echo "    a (configuration) file name or directory can be provided"
-	echo "    via command line, otherwise the list of files configured"
-	echo "    \"\$SYNC_LIST\" is synchronized"
-	echo "    <filename> must be file or directory relative to \"/root/\","
-	echo "    and must not start with a dot (\".\") or a dash (\"-\")"
-	echo ""
-	echo "  -V | --version"
-	echo "    print version information"
-	echo ""
-	echo "  -h | --help"
-	echo "    print this usage information"
-	echo ""
+function print_version {
+	cat <<-EOF
+		${TITLE} ${VERSION}
+		copyright (c) 2020-2023 Daniel Haase
+	EOF
 }
 
-function checkcmd
-{
-	local c="$1"
-	if [ $# -eq 0 ] || [ -z "${c}" ] \
-	|| command -v "${c}" &> /dev/null; then return 0
-	else echo "command \"${c}\" not found"; exit 1; fi
+function print_usage {
+	print_version
+	cat <<-EOF
+
+		usage:  ${TITLE} [--verbose | --quiet] [<file>...]
+		        ${TITLE} [--version | --help]
+
+		   <file>...
+		      file or directory name(s)
+
+		   -v | --verbose
+		      print what is being done
+
+		   -q | --quiet
+		      suppress (verbose and) summary message(s)
+
+		   -V | --version
+		      print version information and exit
+
+		   -h | --help
+		      print this usage description and exit
+
+	EOF
 }
 
-function sync
-{
-	local pth="$1"
-	if [ $# -eq 0 ] || [ -z "$pth" ]; then return 1; fi
-	if [[ "$pth" == "/root/"* ]]; then pth="${pth:6}"; fi
+function assert_root {
+	if [[ ${EUID} -ne 0 ]]; then
+		echo >&2 "please run this script as user \"root\""
+		exit 3
+	fi
+}
 
-	if [[ "$pth" == ".."* ]]; then
-		echo "accessing filesystem root is prohibited"
+function print_message {
+	local -r message="${1}"
+
+	if [[ -n "${message}" && ${verbose} -gt 0 ]]; then
+		echo "${message}"
+	fi
+}
+
+function print_skip {
+	local -r file="${1}"
+
+	if [[ -z "${file}" ]]; then
+		return 0
+	fi
+
+	local type
+
+	if [[ -f "${file}" ]]; then
+		type=" file "
+	elif [[ -d "${file}" ]]; then
+		type=" directory "
+	else
+		type=""
+	fi
+
+	print_message "skipping${type}\"${file}\"..."
+}
+
+function copy_to_user {
+	local -r source="${1}"
+	local -r source_parent="${2}"
+	local -r file="${3}"
+	local -r user="${4}"
+
+	local -r destination_parent="${user}/${source_parent}"
+
+	if [[ ! -d "${destination_parent}" &&
+		"${source_parent}" != "." &&
+		"${source_parent}" != ".." ]]; then
+		print_message "creating directory \"${destination_parent}\"..."
+
+		if ! mkdir --parents "${destination_parent}" &>/dev/null; then
+			echo >&2 "failed to create directory \"${destination_parent}\""
+			return 1
+		fi
+	fi
+
+	local -r destination="${user}/${file}"
+
+	print_message "copying \"${source}\" to \"${destination}\"..."
+
+	cp --recursive --update --force "${source}" "${destination}" \
+		&>/dev/null || {
+		echo >&2 "failed to copy \"${source}\" to \"${destination}\""
+		return 1
+	}
+
+	local -i file_count=0
+	local -i directory_count=0
+
+	file_count="$(find "${source}" -type f -print | wc --lines)"
+	directory_count="$(find "${source}" -type d -print | wc --lines)"
+	total_file_count=$((total_file_count + file_count))
+	total_directory_count=$((total_directory_count + directory_count))
+}
+
+function synchronize_file {
+	local file="${1}"
+
+	if [[ -z "${file}" ]]; then
 		return 1
 	fi
 
-	if [ ! -e "/root/$pth" ]; then
-		echo "file \"/root/$pth\" not found"
+	if [[ "${file}" == "${ROOT_PREFIX}/"* ]]; then
+		file="${file:6}"
+	fi
+
+	local -r source="${ROOT_PREFIX}/${file}"
+
+	if [[ "${file}" == ".."* ]]; then
+		echo >&2 "accessing filesystem root is prohibited"
+		print_skip "${source}"
 		return 1
 	fi
 
-	local dir
-	dir="$(dirname "$pth")"
+	if [[ ! -e "${source}" ]]; then
+		echo >&2 "no such file or directory \"${source}\""
+		print_skip "${source}"
+		return 1
+	fi
 
-	for user in /home/*; do
-		if [ ! -d "$user/$dir" ]; then
-			if [ "$dir" != "." ] && [ "$dir" != ".." ]; then
-				if [ $QUIET -eq 0 ]; then
-					echo "creating directory \"$user/$dir\"..."
-				fi
+	local source_parent
 
-				mkdir -p "$user/$dir"
-			fi
-		fi
+	source_parent="$(dirname "${source}")" || {
+		echo >&2 "failed to get parent directory of path \"${source}\""
+		return 1
+	}
 
-		if [ $QUIET -eq 0 ]; then
-			echo "copying \"/root/$pth\" to \"$user/$pth\"..."
-		fi
+	if [[ "${source_parent}" == "${ROOT_PREFIX}" ]]; then
+		source_parent="."
+	fi
 
-		cp -ru "/root/$pth" "$user/$pth"
-		synct=$((synct + 1))
+	for user in "${HOME_PREFIX}/"*; do
+		copy_to_user "${source}" "${source_parent}" "${file}" "${user}"
 	done
 }
 
-function sync_all
-{
-	local files
-	files=("$@")
-	if [ ${#files[@]} -eq 0 ]; then return 0; fi
+function synchronize_all {
+	local -r -a files=("${@}")
 
-	for f in "${files[@]}"; do
-		if [[ "$f" == "-"* ]]; then continue; fi
-		#if [ $QUIET -eq 0 ]; then echo "synchronizing \"$f\"..."; fi
-		sync "$f"
+	if [[ ${#files[@]} -eq 0 ]]; then
+		return 0
+	fi
+
+	for file in "${files[@]}"; do
+		if [[ "${file}" == "-"* ]]; then
+			continue
+		fi
+
+		print_message "synchronizing \"${file}\"..."
+		synchronize_file "${file}"
 	done
-
-	return 0
 }
 
-checkcmd "basename"
-checkcmd "cp"
-checkcmd "dirname"
-checkcmd "mkdir"
+check_command "cat"
+check_command "cp"
+check_command "dirname"
+check_command "mkdir"
 
-APP=$(basename "$APP")
+assert_root
 
-if [ $EUID -ne 0 ]; then
-	echo "please run \"$APP\" as user \"root\""
-	exit 1
+declare -i verbose=0
+declare -i quiet=0
+
+declare -a synchronization_list=()
+declare -i total_file_count=0
+declare -i total_directory_count=0
+
+while [[ $# -gt 0 ]]; do
+	case "${1}" in
+		-V | --version)
+			print_version
+			exit 0
+			;;
+		-h | --help)
+			print_usage
+			exit 0
+			;;
+		-v | --verbose)
+			verbose=1
+			;;
+		-q | --quiet)
+			quiet=1
+			;;
+		-*)
+			print_usage
+			exit 2
+			;;
+		*)
+			synchronization_list+=("${1}")
+			;;
+	esac
+
+	shift
+done
+
+if [[ "${#synchronization_list[@]}" -lt 1 ]]; then
+	synchronization_list=("${DEFAULT_SYNCHRONIZATION_LIST[@]}")
 fi
 
-if [ $# -gt 0 ]; then
-	if [ "$1" == "-V" ] || [ "$1" == "--version" ]; then version; exit 0
-	elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then usage; exit 0
-	else sync_all "$@"; fi
-else sync_all "$SYNC_LIST"; fi
-
-if [ $QUIET -eq 0 ]; then
-	if [ $synct -eq 0 ]; then echo "done"
-	elif [ $synct -eq 1 ]; then echo "$synct file synchronized"
-	else echo "$synct files synchronized"; fi
+if [[ ${quiet} -gt 0 ]]; then
+	verbose=0
 fi
+
+synchronize_all "${synchronization_list[@]}"
+
+if [[ ${quiet} -eq 0 ]]; then
+	declare message="${total_file_count} "
+
+	if [[ ${total_file_count} -eq 1 ]]; then
+		message+="file "
+	else
+		message+="files "
+	fi
+
+	message+="and ${total_directory_count} "
+
+	if [[ ${total_directory_count} -eq 1 ]]; then
+		message+="directory "
+	else
+		message+="directories "
+	fi
+
+	message+="synchronized"
+
+	echo "${message}"
+fi
+
 exit 0
