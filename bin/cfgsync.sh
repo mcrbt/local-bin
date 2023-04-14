@@ -22,7 +22,7 @@ set -o nounset
 set -o pipefail
 
 TITLE="cfgsync"
-VERSION="0.4.0"
+VERSION="0.4.1"
 
 declare -r ROOT_PREFIX="${ROOT_PREFIX:-"/root"}"
 declare -r HOME_PREFIX="${HOME_PREFIX:-"/home"}"
@@ -204,7 +204,9 @@ function synchronize_all {
 check_command "cat"
 check_command "cp"
 check_command "dirname"
+check_command "find"
 check_command "mkdir"
+check_command "wc"
 
 assert_root
 
