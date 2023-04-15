@@ -22,7 +22,7 @@ set -o nounset
 set -o pipefail
 
 NAME="clean"
-VERSION="0.2.0"
+VERSION="0.2.1"
 
 function check_command {
 	if ! command -v "${1}" &>/dev/null; then
@@ -45,10 +45,10 @@ function print_usage {
 		usage:  ${NAME} [--version | --help]
 
 		   -V | --version
-			  print version information and exit
+		      print version information and exit
 
 		   -h | --help
-			  print this usage description and exit
+		      print this usage description and exit
 
 	EOF
 }
