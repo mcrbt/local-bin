@@ -22,11 +22,11 @@ set -o nounset
 set -o pipefail
 
 TITLE="cfgsync"
-VERSION="0.4.1"
+VERSION="0.4.2"
 
 declare -r ROOT_PREFIX="${ROOT_PREFIX:-"/root"}"
 declare -r HOME_PREFIX="${HOME_PREFIX:-"/home"}"
-declare -r -a DEFAULT_SYNCHRONIZATION_LIST=(
+declare -ra DEFAULT_SYNCHRONIZATION_LIST=(
 	".bashrc"
 	".xinitrc"
 )
@@ -185,7 +185,7 @@ function synchronize_file {
 }
 
 function synchronize_all {
-	local -r -a files=("${@}")
+	local -ra files=("${@}")
 
 	if [[ ${#files[@]} -eq 0 ]]; then
 		return 0
